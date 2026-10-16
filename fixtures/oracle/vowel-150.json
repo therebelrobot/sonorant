@@ -1,0 +1,14 @@
+{
+  "oracle_format": 1,
+  "source": "synthetic-truth",
+  "reference": "fixtures/reference/vowel-150.wav",
+  "description": "synthetic vowel: f0 150 Hz, formants 700/1220/2600 Hz (exact resonator parameters, not a Praat measurement)",
+  "measures": {
+    "f0_hz": { "expected": 150.0, "tolerance_rel": 0.02 },
+    "formants_hz": [
+      { "expected": 700.0, "tolerance_rel": 0.1 },
+      { "expected": 1220.0, "tolerance_rel": 0.1 },
+      { "expected": 2600.0, "tolerance_rel": 0.1 }
+    ]
+  }
+}
