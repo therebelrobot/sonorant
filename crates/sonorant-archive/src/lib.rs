@@ -7,6 +7,9 @@
 
 use std::io::{Read, Seek, Write};
 
+use argon2::{Algorithm, Argon2, Params, Version};
+use chacha20poly1305::aead::{Aead, KeyInit};
+use chacha20poly1305::{XChaCha20Poly1305, XNonce};
 use serde::{Deserialize, Serialize};
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
@@ -32,6 +35,12 @@ pub enum ArchiveError {
     Io(#[from] std::io::Error),
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
+    #[error("malformed archive: {0}")]
+    Malformed(String),
+    #[error("the passphrase did not open the archive")]
+    WrongPassphrase,
+    #[error("crypto error: {0}")]
+    Crypto(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -64,6 +73,7 @@ pub struct Manifest {
     pub counts: Counts,
 }
 
+#[derive(Clone)]
 pub struct ManifestParams {
     pub core_version: String,
     pub abi_version: u32,
@@ -147,4 +157,154 @@ pub fn describe(manifest: &Manifest) -> String {
         manifest.created_at,
         lock
     )
+}
+
+// --- Encryption (S6.2) ---------------------------------------------------------
+//
+// XChaCha20-Poly1305 under an Argon2id-derived key. The key parameters are
+// recorded in `manifest.json`; the salt and nonce travel with the ciphertext as
+// `salt || nonce || ciphertext` inside `payload.enc`.
+
+pub const KDF_ALGO: &str = "argon2id";
+/// 64 MiB — chosen against a device-class time budget (~0.5–1 s on a phone).
+pub const DEFAULT_M: u32 = 65_536;
+pub const DEFAULT_T: u32 = 3;
+pub const DEFAULT_P: u32 = 1;
+pub const SALT_LEN: usize = 16;
+pub const NONCE_LEN: usize = 24;
+const KEY_LEN: usize = 32;
+
+pub fn default_kdf() -> Kdf {
+    Kdf {
+        algo: KDF_ALGO.to_string(),
+        m: DEFAULT_M,
+        t: DEFAULT_T,
+        p: DEFAULT_P,
+    }
+}
+
+fn derive_key(passphrase: &[u8], salt: &[u8], kdf: &Kdf) -> Result<[u8; KEY_LEN], ArchiveError> {
+    let params = Params::new(kdf.m, kdf.t, kdf.p, Some(KEY_LEN))
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+    let mut key = [0u8; KEY_LEN];
+    argon2
+        .hash_password_into(passphrase, salt, &mut key)
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    Ok(key)
+}
+
+fn random_bytes(out: &mut [u8]) -> Result<(), ArchiveError> {
+    getrandom::getrandom(out).map_err(|e| ArchiveError::Crypto(e.to_string()))
+}
+
+/// Encrypt `payload`, returning `salt || nonce || ciphertext`.
+pub fn encrypt_payload(
+    passphrase: &str,
+    payload: &[u8],
+    kdf: &Kdf,
+) -> Result<Vec<u8>, ArchiveError> {
+    let mut salt = [0u8; SALT_LEN];
+    let mut nonce_bytes = [0u8; NONCE_LEN];
+    random_bytes(&mut salt)?;
+    random_bytes(&mut nonce_bytes)?;
+
+    let key = derive_key(passphrase.as_bytes(), &salt, kdf)?;
+    let cipher = XChaCha20Poly1305::new_from_slice(&key)
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    let nonce = XNonce::try_from(&nonce_bytes[..])
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    let ciphertext = cipher
+        .encrypt(&nonce, payload)
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+
+    let mut out = Vec::with_capacity(SALT_LEN + NONCE_LEN + ciphertext.len());
+    out.extend_from_slice(&salt);
+    out.extend_from_slice(&nonce_bytes);
+    out.extend_from_slice(&ciphertext);
+    Ok(out)
+}
+
+/// Decrypt `salt || nonce || ciphertext`. A wrong passphrase is a clean error and
+/// changes nothing.
+pub fn decrypt_payload(
+    passphrase: &str,
+    encrypted: &[u8],
+    kdf: &Kdf,
+) -> Result<Vec<u8>, ArchiveError> {
+    if encrypted.len() < SALT_LEN + NONCE_LEN {
+        return Err(ArchiveError::Malformed(
+            "encrypted payload is too short".to_string(),
+        ));
+    }
+    let (salt, rest) = encrypted.split_at(SALT_LEN);
+    let (nonce_bytes, ciphertext) = rest.split_at(NONCE_LEN);
+
+    let key = derive_key(passphrase.as_bytes(), salt, kdf)?;
+    let cipher = XChaCha20Poly1305::new_from_slice(&key)
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    let nonce = XNonce::try_from(nonce_bytes)
+        .map_err(|e| ArchiveError::Crypto(e.to_string()))?;
+    cipher
+        .decrypt(&nonce, ciphertext)
+        .map_err(|_| ArchiveError::WrongPassphrase)
+}
+
+/// Read the payload entry out of a container (encrypted or not).
+pub fn read_payload<R: Read + Seek>(
+    reader: R,
+    passphrase: Option<&str>,
+) -> Result<Vec<u8>, ArchiveError> {
+    let mut archive = ZipArchive::new(reader)?;
+    let manifest = {
+        let mut file = archive.by_name(MANIFEST_NAME)?;
+        let mut text = String::new();
+        file.read_to_string(&mut text)?;
+        serde_json::from_str::<Manifest>(&text)?
+    };
+
+    let name = payload_name(manifest.encrypted);
+    let mut file = archive.by_name(name)?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+
+    if !manifest.encrypted {
+        return Ok(bytes);
+    }
+    let kdf = manifest
+        .kdf
+        .ok_or_else(|| ArchiveError::Malformed("encrypted archive has no kdf".to_string()))?;
+    let passphrase = passphrase
+        .ok_or(ArchiveError::WrongPassphrase)?;
+    decrypt_payload(passphrase, &bytes, &kdf)
+}
+
+/// Write an archive. `None` is a **plaintext export**, which the UI must gate
+/// behind an explicit, warned choice; encryption is the default.
+pub fn write_archive<W: Write + Seek>(
+    writer: W,
+    params: ManifestParams,
+    payload: &[u8],
+    passphrase: Option<&str>,
+) -> Result<W, ArchiveError> {
+    match passphrase {
+        Some(pass) => {
+            let kdf = params.kdf.clone().unwrap_or_else(default_kdf);
+            let encrypted = encrypt_payload(pass, payload, &kdf)?;
+            let m = manifest(ManifestParams {
+                encrypted: true,
+                kdf: Some(kdf),
+                ..params
+            });
+            write_container(writer, &m, &encrypted)
+        }
+        None => {
+            let m = manifest(ManifestParams {
+                encrypted: false,
+                kdf: None,
+                ..params
+            });
+            write_container(writer, &m, payload)
+        }
+    }
 }
