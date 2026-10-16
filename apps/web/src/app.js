@@ -1,26 +1,24 @@
-// First-run flow: secure-context check, then microphone permission (S4.1).
-//
-// DOM wiring only. The logic lives in capture.js; the copy comes from phase 6.
+// First-run flow: secure-context check, microphone permission, then live capture
+// (S4.1, S4.2). DOM wiring only; the logic lives in capture.js and capture-shim.js.
 
 import { COPY, isSecure, openMicrophone } from "./capture.js";
 
 const PANELS = ["insecure", "permission", "denied", "ready", "status", "checking"];
+const FRAME_WORDS = 30;
 
 const el = (id) => document.getElementById(id);
+const show = (id) => { const n = el(id); if (n) n.hidden = false; };
+const hideAll = () => { for (const id of PANELS) { const n = el(id); if (n) n.hidden = true; } };
 
-function show(id) {
-  const node = el(id);
-  if (node) node.hidden = false;
+let pipeline = null;
+let framesSeen = 0;
+
+function onFrames(frames, count) {
+  framesSeen += count ?? frames.length / FRAME_WORDS;
+  const node = el("frame-count");
+  if (node) node.textContent = `${framesSeen} frames analysed`;
 }
 
-function hideAll() {
-  for (const id of PANELS) {
-    const node = el(id);
-    if (node) node.hidden = true;
-  }
-}
-
-/** Fill the panels with the phase-6 copy, once. */
 function applyCopy() {
   el("insecure-heading").textContent = COPY.insecure.heading;
   el("insecure-body").textContent = COPY.insecure.body;
@@ -37,14 +35,14 @@ function applyCopy() {
   el("retry").textContent = COPY.denied.action;
 }
 
-/** Request the microphone; the browser's own prompt is the only surface shown. */
+/** Request the microphone, then start capture→worklet→worker. */
 async function attempt() {
   hideAll();
   show("status");
   try {
     const stream = await openMicrophone(window);
-    // Handed to the AudioWorklet shim in S4.2.
-    window.__sonorantStream = stream;
+    const { startCapture } = await import("./capture-shim.js");
+    pipeline = await startCapture(stream, { onFrames });
     hideAll();
     show("ready");
   } catch {
@@ -67,5 +65,6 @@ function start() {
 el("allow").addEventListener("click", attempt);
 el("retry").addEventListener("click", attempt);
 el("reload").addEventListener("click", () => window.location.reload());
+window.addEventListener("pagehide", () => pipeline?.stop());
 
 start();

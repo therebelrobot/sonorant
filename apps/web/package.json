@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "test": "node --test",
-    "build": "rm -rf dist && cp -R public dist && cp -R src/. dist/"
+    "build": "rm -rf dist && cp -R public dist && cp -R src/. dist/ && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/src dist/vendor/sonorant/src && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg"
   },
   "license": "Unlicense",
   "type": "module",
