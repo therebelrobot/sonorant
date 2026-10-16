@@ -10,13 +10,17 @@ known formants (a cascade of two-pole resonators). They are **initial**: the Pra
 conformance fixtures in S2.3 are the authoritative check, and these bands will be
 tightened to match Praat once those fixtures exist.
 
+The numbers are defined once, in `sonorant-core::tolerances` (`F0_REL`, `FORMANT_REL`).
+The tests and the S1.4 fixture generator read those constants; this document describes
+them. Published reference fixtures live in [`fixtures/reference/`](../fixtures/reference/).
+
 Signal conventions for the numbers below: sample rate 44.1 kHz, frame 2048 samples, LPC
 order 24, pre-emphasis 0.97, Hann window.
 
 | Measure | Band (synthetic) | Notes |
 |---|---|---|
 | F0 (`f0_hz`) | ±2 % | Measured within ±2 % for 90–300 Hz synthetic vowels; typically <1 % for clean periodic input. YIN with parabolic interpolation. |
-| Formant frequencies (`formants[].hz`) | ±10 % (F1–F3) | F1 is the worst case (pre-emphasis shifts it up); F2/F3 land within ~2 %. To be tightened against Praat in S2.3. |
+| Formant frequencies (`formants[].hz`) | ±10 % (F1–F3) | On the published reference, F1–F3 land within ~3 %; the band is deliberately wider than the current error. To be tightened against Praat in S2.3. |
 | Formant bandwidth | not asserted | Returned by the pole radius; no band until Praat conformance. |
 | HNR (`hnr_db`) | not asserted | Computed via the normalized autocorrelation at the pitch period (Boersma). No band until Praat conformance. |
 | CPP (`cpp_db`) | not asserted | **Provisional and simplified** — a relative linear value, not Praat's CPP. Calibrated in S2.3. |
