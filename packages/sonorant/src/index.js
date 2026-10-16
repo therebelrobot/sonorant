@@ -8,7 +8,8 @@ import initWasm, { Engine } from "../pkg/sonorant_ffi.js";
 import { CORE_ABI_VERSION, FRAME_WORDS } from "./abi.js";
 import { EXPECTED_WASM_SHA256 } from "./wasm-hash.js";
 
-export { CORE_ABI_VERSION, FRAME_WORDS };
+export { CORE_ABI_VERSION, FRAME_WORDS } from "./abi.js";
+export { decodeFrames } from "./frames.js";
 
 /** The wasm instance's linear memory, captured at load. */
 let wasmMemory;

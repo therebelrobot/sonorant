@@ -2,9 +2,18 @@
   "name": "sonorant-cli",
   "version": "0.1.0",
   "scripts": {
-    "test": "echo \"S0.1 scaffold: no tests yet\"",
-    "build": "echo \"S0.1 scaffold: no build step yet\""
+    "test": "node --test",
+    "build": "echo \"sonorant-cli: no build step (plain ESM)\""
   },
   "license": "Unlicense",
-  "type": "commonjs"
+  "type": "module",
+  "bin": {
+    "sonorant-cli": "./bin/sonorant-cli.js"
+  },
+  "description": "Sonorant orchestration CLI (Ink)",
+  "dependencies": {
+    "ink": "^8.0.0",
+    "react": "^19.3.1",
+    "sonorant": "^0.1.0"
+  }
 }
