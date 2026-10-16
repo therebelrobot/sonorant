@@ -10,7 +10,8 @@
 
 use crate::complex::Complex;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(C)]
 pub struct Formant {
     pub hz: f32,
     pub bandwidth_hz: f32,

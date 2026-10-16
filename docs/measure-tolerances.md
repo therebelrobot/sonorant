@@ -28,14 +28,19 @@ order 24, pre-emphasis 0.97, Hann window.
 
 The core never emits a non-finite value outside these cases (TDD §14):
 
-- `spl_db` — `NaN` whenever no calibration is active (TDD §4.2). Not produced by
-  `sonorant-core` yet; added with the frame assembly in S2.1.
+- `spl_db` — `NaN` whenever no calibration is active (TDD §4.2). The frame analyzer
+  sets it and raises the `UNCALIBRATED` flag.
+- `jitter_local`, `shimmer_local` — `NaN` until voiced-cycle segmentation lands with
+  S2.1. `NaN` means "not measured", never a measured zero.
 - `hnr_db`, `h1_h2_db` — `NaN` for an unvoiced frame (`f0_hz <= 0`) or a frame with no
   usable harmonics.
-- `cpp` — `NaN` when the quefrency band is too small to measure a peak.
+- `cpp_db` — `NaN` when the quefrency band is too small to measure a peak.
 
 All other outputs are finite for all inputs, including silence, clipping, and `NaN`
 input (see `crates/sonorant-core/tests/numerics.rs`).
+
+`scale_semitones` is `0.0` in the S1.2 frame analyzer as a placeholder; the session
+baseline that makes it a real log-ratio is supplied by `sonorant-analysis` (S2.2).
 
 ## Changing these numbers
 
