@@ -5,3 +5,5 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+hound = "3.5.1"
+sonorant-core = { version = "0.1.0", path = "../sonorant-core" }
