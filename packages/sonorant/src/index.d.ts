@@ -18,3 +18,19 @@ export interface LoadOptions {
 
 export function loadEngine(sampleRate: number, options?: LoadOptions): Promise<Engine>;
 export function framesView(engine: Engine): Float32Array;
+
+export interface ExportOptions extends LoadOptions {
+  bundleJson: string;
+  coreVersion: string;
+  abiVersion: number;
+  createdAt: string;
+  passphrase?: string | null;
+}
+export interface ImportOptions extends LoadOptions {
+  bytes: Uint8Array;
+  existingJson: string;
+  passphrase?: string | null;
+}
+export function exportArchive(options: ExportOptions): Promise<Uint8Array>;
+export function describeArchive(bytes: Uint8Array, options?: LoadOptions): Promise<string>;
+export function importArchive(options: ImportOptions): Promise<{ bundle: unknown; report: { added: number; skipped: number; conflicted: number; conflicts: string[]; line: string } }>;

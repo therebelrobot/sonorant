@@ -12,6 +12,11 @@ use sonorant_analysis::{
     AnalysisFrame, AnalysisParams, Analyzer, SessionAnalyzer, CORE_ABI_VERSION,
 };
 use sonorant_core::CORE_VERSION;
+use sonorant_archive::{
+    Bundle, Counts, ManifestParams, SCHEMA_VERSION, describe, import_archive, read_manifest,
+    write_archive,
+};
+use std::io::Cursor;
 
 /// Words in one `AnalysisFrame` (TDD §4.4: 29 `f32` + 1 `u32` = 30).
 pub const FRAME_WORDS: usize = 30;
@@ -91,4 +96,74 @@ pub fn require_abi(reader_abi: u32) -> Result<(), String> {
             "CORE_ABI_VERSION mismatch: core is {CORE_ABI_VERSION}, reader expects {reader_abi}. Update both to the same version."
         ))
     }
+}
+
+// --- Archive surface (TDD §8) --------------------------------------------------
+//
+// Thin wrappers over `sonorant-archive`. No archive logic lives here.
+
+fn js_error(error: impl std::fmt::Display) -> String {
+    error.to_string()
+}
+
+/// A plain-language description of an archive, readable without a passphrase.
+#[wasm_bindgen]
+pub fn archive_describe(bytes: &[u8]) -> Result<String, String> {
+    let manifest = read_manifest(Cursor::new(bytes)).map_err(js_error)?;
+    Ok(describe(&manifest))
+}
+
+/// Build an archive from a bundle JSON. `passphrase: None` is a plaintext export.
+#[wasm_bindgen]
+pub fn archive_export(
+    bundle_json: &str,
+    core_version: &str,
+    abi_version: u32,
+    created_at: &str,
+    passphrase: Option<String>,
+) -> Result<Vec<u8>, String> {
+    let bundle: Bundle = serde_json::from_str(bundle_json).map_err(js_error)?;
+    let payload = serde_json::to_string(&bundle).map_err(js_error)?;
+
+    let params = ManifestParams {
+        core_version: core_version.to_string(),
+        abi_version,
+        schema_version: SCHEMA_VERSION,
+        created_at: created_at.to_string(),
+        encrypted: passphrase.is_some(),
+        kdf: None,
+        counts: Counts {
+            sessions: bundle.sessions.len() as u64,
+            utterances: bundle.utterances.len() as u64,
+            recordings: 0,
+        },
+    };
+
+    let mut buffer = Cursor::new(Vec::new());
+    write_archive(&mut buffer, params, payload.as_bytes(), passphrase.as_deref()).map_err(js_error)?;
+    Ok(buffer.into_inner())
+}
+
+/// Import an archive into an existing bundle; returns `{ bundle, report }` JSON.
+#[wasm_bindgen]
+pub fn archive_import(
+    bytes: &[u8],
+    existing_json: &str,
+    passphrase: Option<String>,
+) -> Result<String, String> {
+    let existing: Bundle = serde_json::from_str(existing_json).map_err(js_error)?;
+    let (merged, report) =
+        import_archive(Cursor::new(bytes), passphrase.as_deref(), &existing).map_err(js_error)?;
+
+    Ok(serde_json::json!({
+        "bundle": merged,
+        "report": {
+            "added": report.added,
+            "skipped": report.skipped,
+            "conflicted": report.conflicted,
+            "conflicts": report.conflicts,
+            "line": report.line(),
+        }
+    })
+    .to_string())
 }
