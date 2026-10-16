@@ -19,6 +19,7 @@ This closes the standing "no browser verification" gap for M4.
 | Opt-in recording (S5.2) | Off by default; turning it on writes a valid WAV to OPFS (`session-*.wav`, 1.79 MB, `RIFF`/`WAVE` magic); stopping finalizes it | `recording.png` |
 | History + A/B (S5.3) | Two sessions listed newest-first with `Intl` dates, kind, duration (14.3 s / 8.1 s) and confidence; comparison labelled `Earlier`/`Now` with the no-audio and low-confidence caveats and the "comparing against other people is off" note | `history-compare.png` |
 | Trend (S5.4) | Sparkline from stored `metric_series` with a text summary ("trend is up, ranging -4.4 to 1.7 (confidence: high)"), a distribution line, and a `core_version` boundary marked with a dashed line, a label, and the "points before and after are not directly comparable" note | `trend.png` |
+| Export / import (S6 wiring) | Export downloads a valid encrypted ZIP — plaintext `manifest.json` + `payload.enc`, `argon2id` m=65536/t=3/p=1. The manifest describes the file **without a passphrase**; import decrypts, merges, and reports "Added 0 record(s), skipped 97 already present, 0 conflict(s) kept your existing copy." | `export-import.png` |
 
 The end-to-end chain works: capture in the worklet, analysis on the worker, frames returned
 as a `Float32Array`, decoded at the ABI offsets, and rendered. The CSP did **not** block the

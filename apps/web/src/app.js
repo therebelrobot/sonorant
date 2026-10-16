@@ -17,6 +17,7 @@ import {
 } from "./store/history.js";
 import { buildTrendSeries, segmentDistribution, trendPoints, trendTextAlternative } from "./store/trends.js";
 import { TrendView } from "./pad/trend-view.js";
+import { fromBundle, toBundle } from "./store/bundle.js";
 import { ensureMeasureVersion, getAll, openDatabase, putRows } from "./store/indexed-db.js";
 import { isEnabled } from "./flags.js";
 import { APP_VERSION } from "./version.js";
@@ -221,6 +222,92 @@ async function showTrend() {
   }
 }
 
+/** Export the stored history as an archive (S6 wiring). */
+let pendingPlainExport = false;
+let importBytes = null;
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function currentBundle() {
+  const { sessions, utterances, series } = await loadHistory();
+  return { json: JSON.stringify(toBundle(sessions, utterances, series)), count: sessions.length };
+}
+
+async function exportHistory() {
+  const encrypt = el("export-encrypt").checked;
+  if (!encrypt && !pendingPlainExport) {
+    pendingPlainExport = true;
+    const warning = el("export-warning");
+    warning.hidden = false;
+    warning.textContent =
+      "Anyone who finds this file can read it. A history file can sit in a downloads folder for years. Encrypting is safer.";
+    el("export-run").textContent = "Export unencrypted anyway";
+    return;
+  }
+  pendingPlainExport = false;
+  el("export-warning").hidden = true;
+  el("export-run").textContent = "Export history";
+
+  const { json, count } = await currentBundle();
+  if (count === 0) {
+    el("export-status").textContent = "There is nothing to export yet.";
+    return;
+  }
+  const bytes = await pipeline.exportArchive({
+    bundleJson: json,
+    coreVersion: versions.coreVersion,
+    abiVersion: versions.abiVersion,
+    createdAt: new Date().toISOString(),
+    passphrase: encrypt ? el("export-passphrase").value || null : null,
+  });
+  download(new Blob([bytes], { type: "application/zip" }), `sonorant-history-${Date.now()}.zip`);
+  el("export-status").textContent = "Export saved to your device.";
+}
+
+async function describeImportFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  importBytes = new Uint8Array(await file.arrayBuffer());
+  try {
+    el("import-describe").textContent = await pipeline.describeArchive(importBytes);
+  } catch {
+    importBytes = null;
+    el("import-describe").textContent = "This file is not a Sonorant history archive.";
+  }
+}
+
+async function runImport() {
+  if (!importBytes) {
+    el("import-report").textContent = "Choose a file first.";
+    return;
+  }
+  try {
+    const { json } = await currentBundle();
+    const { bundle, report } = await pipeline.importArchive({
+      bytes: importBytes,
+      existingJson: json,
+      passphrase: el("import-passphrase").value || null,
+    });
+    const merged = fromBundle(bundle);
+    const database = await db();
+    await putRows(database, "session", merged.sessions);
+    await putRows(database, "utterance", merged.utterances);
+    await putRows(database, "metric_series", merged.metric_series);
+    el("import-report").textContent = report.line;
+    await refreshHistory();
+  } catch {
+    el("import-report").textContent =
+      "That passphrase did not open the file, or the file is damaged. Nothing was changed.";
+  }
+}
+
 function applyCopy() {
   el("insecure-heading").textContent = COPY.insecure.heading;
   el("insecure-body").textContent = COPY.insecure.body;
@@ -291,6 +378,17 @@ el("compare").addEventListener("click", () => {
 });
 el("trend-open").addEventListener("click", () => {
   if (isEnabled("enable-longitudinal-trends")) showTrend();
+});
+el("export-run").addEventListener("click", () => {
+  exportHistory().catch(() => {
+    el("export-status").textContent = "Export failed.";
+  });
+});
+el("import-file").addEventListener("change", (event) => {
+  describeImportFile(event).catch(() => {});
+});
+el("import-run").addEventListener("click", () => {
+  runImport().catch(() => {});
 });
 window.addEventListener("pagehide", () => {
   pipeline?.stop();

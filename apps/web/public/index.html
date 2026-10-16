@@ -96,6 +96,36 @@
             <p id="trend-boundary" role="status"></p>
             <p id="trend-stopped" role="status"></p>
           </div>
+
+          <div id="archive">
+            <h4 id="archive-heading">Export and import</h4>
+
+            <p id="export-warning" role="alert" hidden></p>
+            <p>
+              <label>
+                <input type="checkbox" id="export-encrypt" checked />
+                Encrypt this file
+              </label>
+            </p>
+            <p>
+              <label for="export-passphrase">Passphrase</label>
+              <input type="password" id="export-passphrase" autocomplete="new-password" />
+            </p>
+            <button id="export-run" type="button">Export history</button>
+            <p id="export-status" role="status" aria-live="polite"></p>
+
+            <p>
+              <label for="import-file">Import a history file</label>
+              <input type="file" id="import-file" accept=".zip,application/zip" />
+            </p>
+            <p id="import-describe" role="status" aria-live="polite"></p>
+            <p>
+              <label for="import-passphrase">Passphrase</label>
+              <input type="password" id="import-passphrase" autocomplete="current-password" />
+            </p>
+            <button id="import-run" type="button">Import</button>
+            <p id="import-report" role="status" aria-live="polite"></p>
+          </div>
         </section>
       </section>
     </main>

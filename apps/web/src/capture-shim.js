@@ -3,7 +3,20 @@
 // Capture happens in the audio callback; analysis and recording happen on the
 // Worker. This module only wires the two together and detects SharedArrayBuffer.
 
-import { ERROR, FRAMES, PCM, RECORD_START, RECORD_STOP, RECORDING, VERSIONS } from "./protocol.js";
+import {
+  ARCHIVE_DESCRIBE,
+  ARCHIVE_ERROR,
+  ARCHIVE_EXPORT,
+  ARCHIVE_IMPORT,
+  ARCHIVE_RESULT,
+  ERROR,
+  FRAMES,
+  PCM,
+  RECORDING,
+  RECORD_START,
+  RECORD_STOP,
+  VERSIONS,
+} from "./protocol.js";
 import { sharedArrayBufferSupported } from "./shared-array-buffer.js";
 
 export const WORKLET_URL = "worklet/capture-processor.js";
@@ -29,8 +42,28 @@ export async function startCapture(
   const node = new AudioWorkletNode(context, "sonorant-capture");
   const worker = new scope.Worker(new URL(WORKER_URL, import.meta.url), { type: "module" });
 
+  const pending = new Map();
+  let nextArchiveId = 0;
+  const archiveRequest = (type, payload) => {
+    const id = (nextArchiveId += 1);
+    return new Promise((resolve, reject) => {
+      pending.set(id, { resolve, reject });
+      // No transfer: the same bytes may be described and then imported.
+      worker.postMessage({ type, id, ...payload });
+    });
+  };
+
   worker.addEventListener("message", (event) => {
     const data = event.data;
+    if (data && (data.type === ARCHIVE_RESULT || data.type === ARCHIVE_ERROR)) {
+      const entry = pending.get(data.id);
+      if (entry) {
+        pending.delete(data.id);
+        if (data.type === ARCHIVE_RESULT) entry.resolve(data.value);
+        else entry.reject(new Error(data.message));
+      }
+      return;
+    }
     if (data && data.type === FRAMES) onFrames?.(data.frames, data.count);
     else if (data && data.type === RECORDING) onRecording?.(data.state, data.detail);
     else if (data && data.type === VERSIONS) onVersions?.(data);
@@ -53,6 +86,10 @@ export async function startCapture(
   return {
     sampleRate: context.sampleRate,
     sharedArrayBuffer: sharedArrayBufferSupported(scope),
+    describeArchive: (bytes) => archiveRequest(ARCHIVE_DESCRIBE, { bytes }),
+    exportArchive: (payload) => archiveRequest(ARCHIVE_EXPORT, { payload }),
+    importArchive: ({ bytes, existingJson, passphrase }) =>
+      archiveRequest(ARCHIVE_IMPORT, { bytes, payload: { existingJson, passphrase } }),
     setRecording(on) {
       worker.postMessage({
         type: on ? RECORD_START : RECORD_STOP,

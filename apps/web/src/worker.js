@@ -4,9 +4,19 @@
 // The `./vendor/sonorant/...` path is produced by the apps/web build.
 
 import { FRAME_WORDS, framesView, loadEngine } from "./vendor/sonorant/src/index.js";
+import {
+  describeArchive,
+  exportArchive,
+  importArchive,
+} from "./vendor/sonorant/src/index.js";
 import { createRecorder } from "./store/recorder.js";
 import { opfsWavSink } from "./store/opfs.js";
 import {
+  ARCHIVE_DESCRIBE,
+  ARCHIVE_ERROR,
+  ARCHIVE_EXPORT,
+  ARCHIVE_IMPORT,
+  ARCHIVE_RESULT,
   ERROR,
   FRAMES,
   PCM,
@@ -53,6 +63,25 @@ self.addEventListener("message", async (event) => {
 
   if (data.type === RECORD_STOP) {
     if (recorder) await recorder.stop();
+    return;
+  }
+
+  // The archive runs here, not on the page: the page's CSP is connect-src 'none',
+  // so only the worker may fetch the wasm artifact.
+  if (data.type === ARCHIVE_DESCRIBE || data.type === ARCHIVE_EXPORT || data.type === ARCHIVE_IMPORT) {
+    try {
+      let value;
+      if (data.type === ARCHIVE_DESCRIBE) {
+        value = await describeArchive(new Uint8Array(data.bytes));
+      } else if (data.type === ARCHIVE_EXPORT) {
+        value = await exportArchive(data.payload);
+      } else {
+        value = await importArchive({ ...data.payload, bytes: new Uint8Array(data.bytes) });
+      }
+      self.postMessage({ type: ARCHIVE_RESULT, id: data.id, value });
+    } catch (error) {
+      self.postMessage({ type: ARCHIVE_ERROR, id: data.id, message: String(error?.message ?? error) });
+    }
     return;
   }
 
