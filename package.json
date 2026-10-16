@@ -4,7 +4,8 @@
   "scripts": {
     "test": "turbo run test",
     "build": "turbo run build",
-    "check:bundle": "node scripts/egress-scan.mjs"
+    "check:bundle": "node scripts/egress-scan.mjs",
+    "wasm:build": "cargo build -p sonorant-ffi --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir packages/sonorant/pkg --out-name sonorant_ffi target/wasm32-unknown-unknown/release/sonorant_ffi.wasm"
   },
   "license": "Unlicense",
   "type": "commonjs",

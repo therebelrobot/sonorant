@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lib]
+# `cdylib` produces the browser `.wasm`; `rlib` keeps the native test target.
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 sonorant-analysis = { version = "0.1.0", path = "../sonorant-analysis" }
 sonorant-core = { version = "0.1.0", path = "../sonorant-core" }

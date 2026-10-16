@@ -2,9 +2,16 @@
   "name": "sonorant",
   "version": "0.1.0",
   "scripts": {
-    "test": "echo \"S0.1 scaffold: no tests yet\"",
-    "build": "echo \"S0.1 scaffold: no build step yet\""
+    "test": "node --test",
+    "build": "echo \"sonorant: wasm artifacts are committed under pkg/ (rebuild with npm run wasm:build at the repo root)\""
   },
   "license": "Unlicense",
-  "type": "commonjs"
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "src",
+    "pkg",
+    "README.md"
+  ]
 }
