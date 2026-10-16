@@ -35,8 +35,21 @@
         <button id="retry" type="button"></button>
       </section>
 
-      <section id="ready" hidden>
-        <p>Microphone ready. Analyses run on your device.</p>
+      <section id="practice" hidden>
+        <h2>Live practice</h2>
+        <p id="pad-legend">
+          Pitch (Hz) runs across; resonance (semitones) runs up. Pitch is drawn as
+          circles; resonance is marked with squares.
+        </p>
+        <canvas
+          id="pad"
+          width="640"
+          height="360"
+          role="img"
+          aria-label="Pitch by resonance pad. A written summary is provided below the pad."
+        ></canvas>
+        <p id="pad-confidence" role="status" aria-live="polite"></p>
+        <p>Flags this session: <span id="pad-flags">none</span></p>
         <p id="frame-count" role="status" aria-live="polite"></p>
       </section>
     </main>

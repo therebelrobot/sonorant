@@ -1,22 +1,41 @@
-// First-run flow: secure-context check, microphone permission, then live capture
-// (S4.1, S4.2). DOM wiring only; the logic lives in capture.js and capture-shim.js.
+// First-run flow and live pad (S4.1, S4.2, S4.3). DOM wiring only; the logic lives
+// in capture.js, capture-shim.js, frames.js and pad/.
 
 import { COPY, isSecure, openMicrophone } from "./capture.js";
+import { FRAME_WORDS, decodeFrames } from "./frames.js";
+import { PAD_TEXT, PadView } from "./pad/pad-view.js";
+import { activeFlags, isTrustworthy } from "./pad/pad-model.js";
 
-const PANELS = ["insecure", "permission", "denied", "ready", "status", "checking"];
-const FRAME_WORDS = 30;
+const PANELS = ["insecure", "permission", "denied", "practice", "status", "checking"];
 
 const el = (id) => document.getElementById(id);
 const show = (id) => { const n = el(id); if (n) n.hidden = false; };
 const hideAll = () => { for (const id of PANELS) { const n = el(id); if (n) n.hidden = true; } };
 
 let pipeline = null;
+let pad = null;
 let framesSeen = 0;
+const seenFlags = new Set();
 
 function onFrames(frames, count) {
   framesSeen += count ?? frames.length / FRAME_WORDS;
-  const node = el("frame-count");
-  if (node) node.textContent = `${framesSeen} frames analysed`;
+  const counter = el("frame-count");
+  if (counter) counter.textContent = `${framesSeen} frames analysed`;
+  if (!pad) return;
+
+  const decoded = decodeFrames(frames);
+  for (const frame of decoded) {
+    pad.push(frame);
+    for (const label of activeFlags(frame.flags)) seenFlags.add(label);
+  }
+
+  const current = decoded[decoded.length - 1];
+  if (current) {
+    el("pad-confidence").textContent = isTrustworthy(current)
+      ? ""
+      : `${PAD_TEXT.lowConfidence.heading} ${PAD_TEXT.lowConfidence.body}`;
+  }
+  el("pad-flags").textContent = seenFlags.size ? [...seenFlags].join(", ") : "none";
 }
 
 function applyCopy() {
@@ -35,7 +54,6 @@ function applyCopy() {
   el("retry").textContent = COPY.denied.action;
 }
 
-/** Request the microphone, then start capture→worklet→worker. */
 async function attempt() {
   hideAll();
   show("status");
@@ -43,8 +61,9 @@ async function attempt() {
     const stream = await openMicrophone(window);
     const { startCapture } = await import("./capture-shim.js");
     pipeline = await startCapture(stream, { onFrames });
+    pad = new PadView(el("pad"));
     hideAll();
-    show("ready");
+    show("practice");
   } catch {
     hideAll();
     show("denied");
