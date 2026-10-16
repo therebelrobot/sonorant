@@ -28,6 +28,13 @@ order 24, pre-emphasis 0.97, Hann window.
 | H1–H2 (`h1_h2_db`) | not asserted | Harmonic-amplitude difference at the nearest spectrum bins. |
 | RMS (`rms_dbfs`) | exact floor: −160 dBFS | Silence returns the floor; never `-inf`. |
 
+**Formant confidence.** Each formant's confidence is its pole prominence (falling off
+with pole bandwidth) multiplied by a frame-to-frame **stability** term: a formant that
+moved more than 10 % since the previous frame loses confidence, and `FORMANT_UNSTABLE`
+is raised when the mean formant confidence falls below 0.25. The constants live in
+`sonorant-analysis` (`STABILITY_TOLERANCE`, `UNSTABLE_MEAN_CONFIDENCE`, set by the
+TDD's confidence definition in §4.1).
+
 ## Documented non-finite (`NaN`) cases
 
 The core never emits a non-finite value outside these cases (TDD §14):

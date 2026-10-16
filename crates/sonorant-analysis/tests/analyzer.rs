@@ -70,6 +70,25 @@ fn configure_adopts_parameters() {
 }
 
 #[test]
+fn stable_vowel_yields_confident_formants_without_the_unstable_flag() {
+    let mut a = FrameAnalyzer::new(44_100);
+    a.push(&vowel(150.0));
+    let mut out = vec![AnalysisFrame::default(); 64];
+    let n = a.drain(&mut out);
+    let last = &out[n - 1];
+
+    assert!(last.formants[0].hz > 0.0);
+    for formant in &last.formants {
+        assert!((0.0..=1.0).contains(&formant.confidence));
+    }
+    assert_eq!(
+        (last.flags as i64) & (flags::FORMANT_UNSTABLE as i64),
+        0,
+        "a steady vowel should not be flagged unstable"
+    );
+}
+
+#[test]
 fn frame_layout_is_thirty_words() {
     use core::mem::size_of;
     // TDD §4.4: 29 f32 + 1 u32 = 30 words, padding-free.

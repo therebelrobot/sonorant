@@ -1,12 +1,18 @@
 //! The `Analyzer` contract and the default frame-based implementation (TDD §4.1).
 //!
-//! The session state machine and the `scale_semitones` baseline are added here in
-//! S2.2. This module is the single-frame pipeline plus framing, which the CLI
-//! (S1.3) and the WASM surface (S3.1) drive.
+//! The session baseline (`scale_semitones`) is layered on top in `session.rs`.
+//! This module is the single-frame pipeline plus framing, which the CLI (S1.3)
+//! and the WASM surface (S3.1) drive.
 
-use sonorant_core::{cepstrum, features, formants, lpc, pitch, spectrum, window};
+use sonorant_core::formants::{self, Formant, MAX_FORMANTS};
+use sonorant_core::{cepstrum, features, lpc, pitch, spectrum, window};
 
 use crate::frame::{flags, AnalysisFrame, AnalysisParams};
+
+/// Relative frame-to-frame change at which a formant's stability term reaches 0.
+const STABILITY_TOLERANCE: f32 = 0.10;
+/// Mean formant confidence below which `FORMANT_UNSTABLE` is raised.
+const UNSTABLE_MEAN_CONFIDENCE: f32 = 0.25;
 
 /// The shared contract every surface drives (TDD §4.1). No acoustic maths in any
 /// caller; the maths lives in `sonorant-core`.
@@ -27,6 +33,9 @@ pub struct FrameAnalyzer {
     /// Session sample index of `buffer[0]`, for `t_ms`.
     buffer_origin: u64,
     pending: Vec<AnalysisFrame>,
+    /// Previous frame's formant frequencies, for the stability term.
+    prev_formant_hz: [f32; MAX_FORMANTS],
+    has_prev: bool,
 }
 
 impl Default for FrameAnalyzer {
@@ -42,6 +51,8 @@ impl FrameAnalyzer {
             buffer: Vec::new(),
             buffer_origin: 0,
             pending: Vec::new(),
+            prev_formant_hz: [0.0; MAX_FORMANTS],
+            has_prev: false,
         }
     }
 
@@ -67,8 +78,8 @@ impl FrameAnalyzer {
         );
         let cpp = cepstrum::cpp(&cepstrum::real_cepstrum(&framed), sr);
 
-        let mut slot = [formants::Formant::default(); formants::MAX_FORMANTS];
-        for (i, f) in found.iter().take(formants::MAX_FORMANTS).enumerate() {
+        let mut slot = [Formant::default(); MAX_FORMANTS];
+        for (i, f) in found.iter().take(MAX_FORMANTS).enumerate() {
             slot[i] = *f;
         }
 
@@ -89,7 +100,7 @@ impl FrameAnalyzer {
             tilt_db_per_oct: features::spectral_tilt_db_per_oct(&magnitude, sr),
             h1_h2_db: features::h1_h2_db(&magnitude, sr, pitch_est.f0_hz),
             centroid_hz: features::centroid_hz(&magnitude, sr),
-            // Session baseline is supplied by the session layer (S2.2).
+            // Session baseline is layered on top in session.rs (S2.2).
             scale_semitones: 0.0,
             rms_dbfs: features::rms_dbfs(frame),
             // Uncalibrated until a calibration exists (S7); flagged UNCALIBRATED.
@@ -112,13 +123,57 @@ impl FrameAnalyzer {
         while self.buffer.len() >= frame_len {
             let t_ms = (self.buffer_origin * 1000 / sample_rate) as u32;
             let frame: Vec<f32> = self.buffer[..frame_len].to_vec();
-            self.pending.push(self.analyze(&frame, t_ms));
+            let mut analysis = self.analyze(&frame, t_ms);
+            temper_stability(&self.prev_formant_hz, self.has_prev, &mut analysis);
+            apply_unstable_flag(&mut analysis);
+            for i in 0..MAX_FORMANTS {
+                self.prev_formant_hz[i] = analysis.formants[i].hz;
+            }
+            self.has_prev = true;
+            self.pending.push(analysis);
             produced += 1;
             let advance = hop.min(self.buffer.len());
             self.buffer.drain(..advance);
             self.buffer_origin += advance as u64;
         }
         produced
+    }
+}
+
+/// Temper each formant's confidence by how little it moved since the previous
+/// frame (TDD §4.1: prominence "tempered by pole stability across neighbouring
+/// frames"). The first frame is treated as fully stable.
+fn temper_stability(prev: &[f32; MAX_FORMANTS], has_prev: bool, frame: &mut AnalysisFrame) {
+    if !has_prev {
+        return;
+    }
+    for i in 0..MAX_FORMANTS {
+        let now = frame.formants[i].hz;
+        let before = prev[i];
+        if now > 0.0 && before > 0.0 {
+            let relative = ((now - before).abs() / now).min(1.0);
+            let stability = (1.0 - relative / STABILITY_TOLERANCE).clamp(0.0, 1.0);
+            frame.formants[i].confidence =
+                (frame.formants[i].confidence * stability).clamp(0.0, 1.0);
+        }
+    }
+}
+
+/// Raise `FORMANT_UNSTABLE` when the frame has formants but their mean confidence
+/// is below the threshold.
+fn apply_unstable_flag(frame: &mut AnalysisFrame) {
+    let confidences: Vec<f32> = frame
+        .formants
+        .iter()
+        .filter(|f| f.hz > 0.0)
+        .map(|f| f.confidence)
+        .collect();
+    if confidences.is_empty() {
+        return;
+    }
+    let mean = confidences.iter().sum::<f32>() / confidences.len() as f32;
+    if mean < UNSTABLE_MEAN_CONFIDENCE {
+        frame.flags += flags::FORMANT_UNSTABLE;
     }
 }
 
@@ -144,5 +199,57 @@ impl Analyzer for FrameAnalyzer {
         self.buffer.clear();
         self.buffer_origin = 0;
         self.pending.clear();
+        self.prev_formant_hz = [0.0; MAX_FORMANTS];
+        self.has_prev = false;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn frame_with(formants: &[f32]) -> AnalysisFrame {
+        let mut f = AnalysisFrame::default();
+        for (i, &hz) in formants.iter().enumerate() {
+            f.formants[i] = Formant {
+                hz,
+                bandwidth_hz: 100.0,
+                confidence: 0.8,
+            };
+        }
+        f
+    }
+
+    #[test]
+    fn first_frame_is_not_tempered() {
+        let mut f = frame_with(&[700.0, 1220.0, 2600.0]);
+        temper_stability(&[0.0; MAX_FORMANTS], false, &mut f);
+        assert!((f.formants[0].confidence - 0.8).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_jump_across_frames_reduces_confidence() {
+        let prev = [700.0f32, 1220.0, 2600.0, 0.0, 0.0];
+        let mut stable = frame_with(&[702.0, 1222.0, 2602.0]);
+        temper_stability(&prev, true, &mut stable);
+        let mut jumped = frame_with(&[900.0, 1220.0, 2600.0]);
+        temper_stability(&prev, true, &mut jumped);
+        assert!(
+            stable.formants[0].confidence > jumped.formants[0].confidence,
+            "stable {:?} should beat jumped {:?}",
+            stable.formants[0].confidence,
+            jumped.formants[0].confidence
+        );
+        assert!(jumped.formants[0].confidence < 0.8);
+    }
+
+    #[test]
+    fn unstable_flag_raised_on_low_mean_confidence() {
+        let mut f = frame_with(&[700.0, 1220.0, 2600.0]);
+        for formant in f.formants.iter_mut() {
+            formant.confidence = 0.1;
+        }
+        apply_unstable_flag(&mut f);
+        assert_ne!((f.flags as i64) & (flags::FORMANT_UNSTABLE as i64), 0);
     }
 }
