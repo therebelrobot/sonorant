@@ -4,17 +4,26 @@
 /// emits a non-finite value here (TDD §14).
 pub const DBFS_FLOOR: f32 = -160.0;
 
+/// Ceiling in dBFS, reached only by out-of-range input. A signal in `[-1, 1]`
+/// cannot exceed 0 dBFS; this exists so an infinite sample yields a finite value.
+pub const DBFS_CEILING: f32 = 60.0;
+
 /// RMS level in dBFS for a signal nominally in `[-1, 1]`. Silence returns
-/// [`DBFS_FLOOR`].
+/// [`DBFS_FLOOR`]; out-of-range input is clamped to `[DBFS_FLOOR, DBFS_CEILING]`.
 pub fn rms_dbfs(frame: &[f32]) -> f32 {
     if frame.is_empty() {
         return DBFS_FLOOR;
     }
     let mean_square = frame.iter().map(|x| x * x).sum::<f32>() / frame.len() as f32;
-    if mean_square <= 0.0 {
+    if mean_square <= 0.0 || mean_square.is_nan() {
         return DBFS_FLOOR;
     }
-    (10.0 * mean_square.log10()).max(DBFS_FLOOR)
+    let dbfs = 10.0 * mean_square.log10();
+    if dbfs.is_nan() {
+        DBFS_FLOOR
+    } else {
+        dbfs.clamp(DBFS_FLOOR, DBFS_CEILING)
+    }
 }
 
 /// Spectral centroid in Hz from a magnitude spectrum.
@@ -31,7 +40,12 @@ pub fn centroid_hz(magnitude: &[f32], sample_rate: f32) -> f32 {
         den += m;
     }
     if den > 0.0 {
-        num / den
+        let centroid = num / den;
+        if centroid.is_finite() {
+            centroid
+        } else {
+            0.0
+        }
     } else {
         0.0
     }
@@ -59,8 +73,13 @@ pub fn spectral_tilt_db_per_oct(magnitude: &[f32], sample_rate: f32) -> f32 {
         n += 1.0;
     }
     let denom = n * sxx - sx * sx;
-    if n >= 2.0 && denom.abs() > f32::EPSILON {
+    let slope = if n >= 2.0 && denom.abs() > f32::EPSILON {
         (n * sxy - sx * sy) / denom
+    } else {
+        0.0
+    };
+    if slope.is_finite() {
+        slope
     } else {
         0.0
     }
