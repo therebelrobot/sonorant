@@ -115,18 +115,27 @@ export class PadView {
     const py = plot.y + plot.h - y * plot.h;
     ctx.save();
     if (!isTrustworthy(frame)) {
-      // Low-confidence overlay: a hatch plus a text label, never colour alone.
-      ctx.strokeStyle = "rgba(180,120,0,0.55)";
+      // Low-confidence overlay: a subtle hatch clipped to the plot, plus a text
+      // label — never colour alone, and never so heavy that it hides the trace.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(plot.x, plot.y, plot.w, plot.h);
+      ctx.clip();
+      ctx.strokeStyle = "rgba(180,120,0,0.22)";
       ctx.lineWidth = 1;
-      for (let d = -plot.h; d < plot.w; d += 8) {
+      for (let d = -plot.h; d < plot.w; d += 10) {
         ctx.beginPath();
         ctx.moveTo(plot.x + d, plot.y);
         ctx.lineTo(plot.x + d + plot.h, plot.y + plot.h);
         ctx.stroke();
       }
+      ctx.restore();
+
+      ctx.save();
       ctx.fillStyle = "#7a4d00";
       ctx.font = "12px system-ui, sans-serif";
       ctx.fillText("Confidence: low", plot.x + 6, plot.y + 16);
+      ctx.restore();
     }
     ctx.strokeStyle = "#1b1b1b";
     ctx.lineWidth = 2;
