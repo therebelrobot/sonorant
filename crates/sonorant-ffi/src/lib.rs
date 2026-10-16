@@ -80,3 +80,15 @@ impl Engine {
         CORE_ABI_VERSION
     }
 }
+
+/// The startup guard a JS reader must call with the ABI version it was built for.
+/// A mismatch is a hard startup failure, not a silent misread (TDD §9.5, §4.4).
+pub fn require_abi(reader_abi: u32) -> Result<(), String> {
+    if reader_abi == CORE_ABI_VERSION {
+        Ok(())
+    } else {
+        Err(format!(
+            "CORE_ABI_VERSION mismatch: core is {CORE_ABI_VERSION}, reader expects {reader_abi}. Update both to the same version."
+        ))
+    }
+}
