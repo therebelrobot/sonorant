@@ -3,7 +3,7 @@
 // Browser-only. The row shapes are built in schema.js and unit-tested there; this
 // file only opens the database and writes rows.
 
-import { STORES } from "./schema.js";
+import { STORES } from "./schema.ts";
 
 export const DB_NAME = "sonorant";
 export const DB_VERSION = 1;

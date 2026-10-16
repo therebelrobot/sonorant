@@ -9,12 +9,13 @@
     "noEmit": true,
     "strict": false,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "types": []
   },
   "include": [
-    "src/store/**/*",
-    "src/pad/pad-model.js",
-    "src/pad/summary.js",
-    "src/pad/trend-view.js"
+    "src/pad/pad-model.ts",
+    "src/pad/summary.ts",
+    "src/pad/trend-view.ts",
+    "src/store/**/*.ts"
   ]
 }

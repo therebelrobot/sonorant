@@ -11,7 +11,7 @@ import {
   resonanceLine,
   summarize,
   summaryText,
-} from "../src/pad/summary.js";
+} from "../src/pad/summary.ts";
 
 const voiced = (over = {}) => ({
   f0_hz: 180,

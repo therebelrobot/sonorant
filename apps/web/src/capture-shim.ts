@@ -16,8 +16,8 @@ import {
   RECORD_START,
   RECORD_STOP,
   VERSIONS,
-} from "./protocol.js";
-import { sharedArrayBufferSupported } from "./shared-array-buffer.js";
+} from "./protocol.ts";
+import { sharedArrayBufferSupported } from "./shared-array-buffer.ts";
 
 export const WORKLET_URL = "worklet/capture-processor.js";
 export const WORKER_URL = "worker.js";

@@ -7,7 +7,7 @@
 //   - Every stored record carries the `core_version` that produced it, and a
 //     `measure_version` row exists for that version (TDD §9).
 
-import { meanFormantConfidence } from "../pad/pad-model.js";
+import { meanFormantConfidence } from "../pad/pad-model.ts";
 
 export const SCHEMA_VERSION = 1;
 

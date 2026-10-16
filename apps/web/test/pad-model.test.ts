@@ -16,7 +16,7 @@ import {
   mapResonance,
   padPoint,
   prefersReducedMotion,
-} from "../src/pad/pad-model.js";
+} from "../src/pad/pad-model.ts";
 
 const frame = (over = {}) => ({
   f0_hz: 200,

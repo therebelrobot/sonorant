@@ -30,7 +30,7 @@ export function createRecorder({ openSink, onStateChange }) {
   let state = RecordingState.OFF;
   let sink = null;
 
-  const announce = (detail) => onStateChange?.({ state, detail });
+  const announce = (detail?: string) => onStateChange?.({ state, detail });
 
   async function dropSink() {
     if (!sink) return;

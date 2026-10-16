@@ -3,7 +3,7 @@
 // Writes a 32-bit float mono WAV: a placeholder header, the PCM, then the two size
 // fields patched on close.
 
-import { u32Bytes, wavHeader } from "./wav.js";
+import { u32Bytes, wavHeader } from "./wav.ts";
 
 export async function opfsWavSink(
   fileName,

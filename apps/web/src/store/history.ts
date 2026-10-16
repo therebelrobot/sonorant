@@ -1,15 +1,15 @@
 // History and A/B comparison (S5.3). Pure record-building and view models; the
 // IndexedDB read/write lives in indexed-db.js.
 
-import { confidenceBand } from "../pad/pad-model.js";
+import { confidenceBand } from "../pad/pad-model.ts";
 import {
   SCHEMA_VERSION,
   measureVersionRow,
   metricSeriesRows,
   sessionRow,
   utteranceRow,
-} from "./schema.js";
-import { buildAnalysisSummary } from "./summary.js";
+} from "./schema.ts";
+import { buildAnalysisSummary } from "./summary.ts";
 
 export const HISTORY_COPY = {
   heading: "History",

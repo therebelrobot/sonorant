@@ -9,7 +9,7 @@
 // has no such numbers. This returns `null` for an empty block rather than
 // inventing zeros.
 
-import { FLAGS } from "../pad/pad-model.js";
+import { FLAGS } from "../pad/pad-model.ts";
 
 const FLAG_NAMES = {
   CLIPPED: FLAGS.CLIPPED,

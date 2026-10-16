@@ -8,7 +8,7 @@ import {
   CaptureProcessorCore,
   createChunker,
   DEFAULT_CHUNK_SAMPLES,
-} from "../src/worklet/capture-processor.js";
+} from "../src/worklet/capture-processor.ts";
 
 test("chunker emits exact-size copies and holds the remainder", () => {
   const chunker = createChunker(4);

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { sharedArrayBufferSupported } from "../src/shared-array-buffer.js";
+import { sharedArrayBufferSupported } from "../src/shared-array-buffer.ts";
 
 test("detects SharedArrayBuffer without requiring it", () => {
   assert.equal(sharedArrayBufferSupported({ SharedArrayBuffer: function () {} }), true);

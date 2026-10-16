@@ -9,8 +9,8 @@ import {
   exportArchive,
   importArchive,
 } from "./vendor/sonorant/src/index.js";
-import { createRecorder } from "./store/recorder.js";
-import { opfsWavSink } from "./store/opfs.js";
+import { createRecorder } from "./store/recorder.ts";
+import { opfsWavSink } from "./store/opfs.ts";
 import {
   ARCHIVE_DESCRIBE,
   ARCHIVE_ERROR,
@@ -25,7 +25,7 @@ import {
   RECORD_START,
   RECORD_STOP,
   VERSIONS,
-} from "./protocol.js";
+} from "./protocol.ts";
 
 let engine = null;
 let sampleRate = 44100;

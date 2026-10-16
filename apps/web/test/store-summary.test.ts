@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { buildAnalysisSummary, statBlock } from "../src/store/summary.js";
+import { buildAnalysisSummary, statBlock } from "../src/store/summary.ts";
 
 const frame = (over = {}) => ({
   t_ms: 0,

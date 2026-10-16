@@ -9,7 +9,7 @@ import {
   metricSeriesRows,
   sessionRow,
   utteranceRow,
-} from "../src/store/schema.js";
+} from "../src/store/schema.ts";
 
 const frame = (over = {}) => ({
   t_ms: 0,

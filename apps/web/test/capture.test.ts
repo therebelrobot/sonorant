@@ -5,7 +5,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { COPY, MIC_CONSTRAINTS, isSecure, openMicrophone } from "../src/capture.js";
+import { COPY, MIC_CONSTRAINTS, isSecure, openMicrophone } from "../src/capture.ts";
 
 test("microphone constraints are the mandatory ones (TDD §6.1)", () => {
   assert.deepEqual(MIC_CONSTRAINTS, {

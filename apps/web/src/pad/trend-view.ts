@@ -1,14 +1,18 @@
 // Trend sparkline with core_version boundary marks (S5.4). Draws the chart; the
 // accessible text lives in the DOM, never on the canvas alone.
 
-import { TREND_COPY, channelLabel, trendStopsAt } from "../store/trends.js";
+import { TREND_COPY, channelLabel, trendStopsAt } from "../store/trends.ts";
 
 const MARGIN = { left: 46, right: 14, top: 16, bottom: 30 };
 
 export class TrendView {
-  constructor(canvas) {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  series: any;
+
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
+    this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this.series = null;
   }
 

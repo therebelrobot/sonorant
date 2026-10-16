@@ -4,8 +4,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { RecordingState, createRecorder } from "../src/store/recorder.js";
-import { WAV_HEADER_BYTES, wavHeader } from "../src/store/wav.js";
+import { RecordingState, createRecorder } from "../src/store/recorder.ts";
+import { WAV_HEADER_BYTES, wavHeader } from "../src/store/wav.ts";
 
 function fakeSink({ failWrite = false } = {}) {
   const written = [];

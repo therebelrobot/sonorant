@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "test": "node --test",
-    "build": "rm -rf dist && cp -R public dist && rsync -a --exclude \"*.ts\" src/ dist/ && esbuild src/store/bundle.ts --outfile=dist/store/bundle.js --format=esm && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/src dist/vendor/sonorant/src && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg",
+    "build": "rm -rf dist && cp -R public dist && esbuild src/app.ts src/worker.ts src/worklet/capture-processor.ts --bundle --format=esm --outbase=src --outdir=dist --external:./vendor/* --log-level=warning && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/src dist/vendor/sonorant/src && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg",
     "typecheck": "tsc -p tsconfig.json"
   },
   "license": "Unlicense",

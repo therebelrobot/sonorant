@@ -1,7 +1,7 @@
 // Longitudinal trends (S5.4). Pure: series building, `core_version` boundaries,
 // distribution, and the text alternative. The chart itself is trend-view.js.
 
-import { confidenceBand } from "../pad/pad-model.js";
+import { confidenceBand } from "../pad/pad-model.ts";
 
 export const TREND_COPY = {
   heading: "Trend",
@@ -114,7 +114,18 @@ export function trendTextAlternative(series) {
  * tagging each with the `core_version` of the session that produced it.
  * No historical audio is re-analysed here.
  */
-export function trendPoints(sessions, utterances, seriesRows, channel) {
+export function trendPoints(
+  sessions: Array<{ id: string; core_version: string; started_at: number }>,
+  utterances: Array<{ id: string; session_id: string }>,
+  seriesRows: Array<{
+    utterance_id: string;
+    channel: string;
+    t_ms: number;
+    value: number;
+    confidence: number;
+  }>,
+  channel: string,
+) {
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
   const sessionByUtterance = new Map(utterances.map((u) => [u.id, u.session_id]));
   return seriesRows

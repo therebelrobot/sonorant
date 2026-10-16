@@ -13,7 +13,7 @@ import {
   trendPoints,
   trendStopsAt,
   trendTextAlternative,
-} from "../src/store/trends.js";
+} from "../src/store/trends.ts";
 
 const point = (t_ms, value, coreVersion = "0.1.0", confidence = 0.8) => ({
   t_ms,

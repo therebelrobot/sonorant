@@ -1,12 +1,13 @@
 // First-run flow, live pad, recording, summary, history and A/B (S4.1–S5.3).
 // DOM wiring only; the logic lives in the imported modules.
 
-import { COPY, isSecure, openMicrophone } from "./capture.js";
+import { COPY, isSecure, openMicrophone } from "./capture.ts";
+import { startCapture } from "./capture-shim.ts";
 import { FRAME_WORDS, decodeFrames } from "./vendor/sonorant/src/index.js";
-import { PAD_TEXT, PadView } from "./pad/pad-view.js";
-import { activeFlags, isTrustworthy } from "./pad/pad-model.js";
-import { summarize } from "./pad/summary.js";
-import { RECORDING_COPY } from "./store/recorder.js";
+import { PAD_TEXT, PadView } from "./pad/pad-view.ts";
+import { activeFlags, isTrustworthy } from "./pad/pad-model.ts";
+import { summarize } from "./pad/summary.ts";
+import { RECORDING_COPY } from "./store/recorder.ts";
 import {
   HISTORY_COPY,
   buildSessionRecords,
@@ -14,13 +15,13 @@ import {
   historyRowSummary,
   toComparisonViewModel,
   toHistoryViewModel,
-} from "./store/history.js";
-import { buildTrendSeries, segmentDistribution, trendPoints, trendTextAlternative } from "./store/trends.js";
-import { TrendView } from "./pad/trend-view.js";
-import { fromBundle, toBundle } from "./store/bundle.js";
-import { ensureMeasureVersion, getAll, openDatabase, putRows } from "./store/indexed-db.js";
-import { isEnabled } from "./flags.js";
-import { APP_VERSION } from "./version.js";
+} from "./store/history.ts";
+import { buildTrendSeries, segmentDistribution, trendPoints, trendTextAlternative } from "./store/trends.ts";
+import { TrendView } from "./pad/trend-view.ts";
+import { fromBundle, toBundle } from "./store/bundle.ts";
+import { ensureMeasureVersion, getAll, openDatabase, putRows } from "./store/indexed-db.ts";
+import { isEnabled } from "./flags.ts";
+import { APP_VERSION } from "./version.ts";
 
 const PANELS = ["insecure", "permission", "denied", "practice", "status", "checking"];
 const MAX_SESSION_FRAMES = 20000;
@@ -332,7 +333,6 @@ async function attempt() {
   const context = AudioContextCtor ? new AudioContextCtor() : null;
   try {
     const stream = await openMicrophone(window);
-    const { startCapture } = await import("./capture-shim.js");
     pipeline = await startCapture(stream, { onFrames, onRecording, onVersions, context });
     pad = new PadView(el("pad"));
     recording = "off";

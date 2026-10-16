@@ -8,7 +8,7 @@ import {
   confidenceBand,
   isTrustworthy,
   meanFormantConfidence,
-} from "./pad-model.js";
+} from "./pad-model.ts";
 
 export const SUMMARY_COPY = {
   heading: "Summary",

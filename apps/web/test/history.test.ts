@@ -12,7 +12,7 @@ import {
   summaryReliable,
   toComparisonViewModel,
   toHistoryViewModel,
-} from "../src/store/history.js";
+} from "../src/store/history.ts";
 
 const frame = (over = {}) => ({
   t_ms: 0,

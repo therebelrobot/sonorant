@@ -5,7 +5,7 @@
 // Nothing animates: every update is a static redraw, so reduced-motion is
 // satisfied by construction.
 
-import { isTrustworthy, mapPitch, mapResonance, padPoint } from "./pad-model.js";
+import { isTrustworthy, mapPitch, mapResonance, padPoint } from "./pad-model.ts";
 
 const MARGIN = { left: 44, right: 12, top: 12, bottom: 28 };
 const PITCH_TICKS = [100, 200, 400, 800];
