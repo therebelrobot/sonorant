@@ -49,3 +49,18 @@ jobs:
       # Egress origin scan + CSP check on the built bundle (S0.3, TDD §12).
       - run: npm run check:bundle
       - run: npm run test
+
+  web:
+    name: Web checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # Automated first-run / live / history / archive checks (phase 8).
+      - run: npm run check:web

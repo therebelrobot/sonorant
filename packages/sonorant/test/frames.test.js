@@ -1,4 +1,4 @@
-// S4.3 tests: the worker's flat f32 frame block decodes at the manifest offsets.
+// Tests for the shared wire decoder (the single copy of the frame layout).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -9,16 +9,16 @@ function oneFrame() {
   const w = new Float32Array(FRAME_WORDS);
   new Uint32Array(w.buffer, w.byteOffset, w.length)[0] = 123; // t_ms is a u32
   w[1] = 180; // f0_hz
-  w[2] = 0.9; // voicing
-  w[3] = 0.8; // f0_confidence
-  w[4] = 700; // formants[0].hz
+  w[2] = 0.9;
+  w[3] = 0.8;
+  w[4] = 700;
   w[5] = 90;
   w[6] = 0.7;
-  w[19] = 12.5; // hnr_db
-  w[24] = -1.5; // scale_semitones
-  w[25] = -20; // rms_dbfs
-  w[26] = Number.NaN; // spl_db
-  w[29] = 32; // flags (UNCALIBRATED)
+  w[19] = 12.5;
+  w[24] = -1.5;
+  w[25] = -20;
+  w[26] = Number.NaN;
+  w[29] = 32;
   return w;
 }
 

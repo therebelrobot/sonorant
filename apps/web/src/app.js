@@ -2,7 +2,7 @@
 // DOM wiring only; the logic lives in the imported modules.
 
 import { COPY, isSecure, openMicrophone } from "./capture.js";
-import { FRAME_WORDS, decodeFrames } from "./frames.js";
+import { FRAME_WORDS, decodeFrames } from "./vendor/sonorant/src/index.js";
 import { PAD_TEXT, PadView } from "./pad/pad-view.js";
 import { activeFlags, isTrustworthy } from "./pad/pad-model.js";
 import { summarize } from "./pad/summary.js";
