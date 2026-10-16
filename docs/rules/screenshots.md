@@ -1,0 +1,1 @@
+When processing screenshots, it is CRITICAL that you DO NOT PROCESS THEM IN BULK. This causes a provider error which is irrecoverable. Process images ONE AT A TIME.

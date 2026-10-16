@@ -2,6 +2,8 @@
 
 This file tells AI coding agents how to work in the Sonorant repository. Read it before making changes. It is a map and a set of hard constraints, not a tutorial.
 
+Long-form project rules live in [`docs/rules/`](docs/rules/), one file per topic. This file is the entry point: it inlines the rules that apply on every change, and links the fuller text. Any agent that reads `AGENTS.md` — opencode, Claude Code, Cursor, and compatible tools — gets the essentials here.
+
 ---
 
 ## Repo purpose
@@ -43,6 +45,7 @@ sonorant/
   package.json          # npm workspace root (workspaces field)
   turbo.json
   docs/
+    rules/              # project rules (this file links here)
 ```
 
 ### Where things live
@@ -83,7 +86,7 @@ There is no network client in the codebase. No telemetry, no analytics, no crash
 
 ### 4. Utility crates only; the acoustic layer is written in-house
 
-Dependency licences are gated by `cargo-deny` with an allowlist of **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0**. Any new dependency without a verified licence fails the build, not the review. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment.
+Dependency licences are gated by `cargo-deny` (config: [`deny.toml`](deny.toml); verification record: [`docs/dependency-licences.md`](docs/dependency-licences.md)) with an allowlist of **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0**. Any new dependency without a verified licence fails the build, not the review. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment in `deny.toml`.
 
 Do not depend on crates built for competing products in the same market (e.g. `loqa-voice-dsp`, `syne_audio_dsp`) — reference reading only. Do not add GPL/AGPL dependencies (Praat, Essentia, aubio). Praat is permitted only as an offline validation oracle that ships nothing.
 
@@ -104,20 +107,51 @@ The project follows the **Risk Reduction Delivery Framework (RRF)** at the **lig
 
 Never automate: feature-flag exposure, go/no-go decisions, or launch actions. Prepare, verify, and recommend — a human approves.
 
+The invariants that never scale away are in [`docs/rules/risk-reduction-framework.md`](docs/rules/risk-reduction-framework.md).
+
 ---
 
-## Binding project rules
+## Project rules
 
-The `.roo/rules/` directory contains binding project rules. They are not restated here — read them directly. They cover:
+These are binding on every change. The full text of each rule is a file in [`docs/rules/`](docs/rules/); the essentials are below so a rule is never missed by an agent that only reads this file. When a rule conflicts with a request, surface the conflict and require an explicit override.
 
-- **Inclusive software** (`00-inclusive-software.md`) — data modelling for names, gender, pronouns, address, and location; authentication and audit trails; accessibility; internationalisation; inclusive terminology; algorithmic fairness; privacy for vulnerable populations.
-- **npm dependency handling** (`01-NPM-dependencies.md`) — never write to `package.json` directly; use npm to check latest version and install/uninstall.
-- **File-edit retry strategy** (`02-file-edit-retry-strategy.md`) — use Roo's file editing tools; never use `sed`/`awk`/`perl`/`python`/`node` to modify files.
-- **GitHub MCP preference** (`04-github-mcp-preference.md`) — use the GitHub MCP server, not the `gh` CLI.
-- **jq usage** (`05-use-jq.md`) — use `jq` to filter JSON rather than overwhelming the context window.
-- **Working from spec** (`06-working-from-spec.md`) — follow accepted architecture; audit against the spec; surface deviations before continuing.
-- **Workspaces** (`07-workspaces.md`) — prefer `npm -w <PROJECT>` from the repo root in monorepos.
-- **Screenshot processing** (`08-processing-screenshots.md`) — process screenshots one at a time, never in bulk.
-- **AuDHD communication style** (`i-have-audhd.md`) — lead with the next action, be literal and explicit, mark approximations, signpost transitions, keep structure consistent.
+### Working from the spec
+Follow the accepted architecture as closely as technically possible. After implementing, audit the result against the spec. If you cannot follow the spec for a technical reason, stop: present the issue and an alternative, and wait for acceptance before continuing — never assume the answer. If an alternative is accepted (or the user directs a deviation), update the spec document *before* continuing, so it reflects the new state. — *reason: an undocumented divergence is how the code and the spec silently disagree.* Full: [`docs/rules/working-from-spec.md`](docs/rules/working-from-spec.md).
 
-When a rule conflicts with a request, surface the conflict and require an explicit override.
+### Don't overthink; take the first step
+When a spec already exists, do not deliberate about the whole implementation at the expense of calling tools. Identify the first step, execute it, then continue. — *reason: deliberation that replaces action produces no artifact.* Full: [`docs/rules/overthinking.md`](docs/rules/overthinking.md).
+
+### npm dependencies: never hand-edit `package.json`
+Check the latest version with npm, then install/uninstall with npm. Hand-written version strings are frequently hallucinated or stale. Applies to every `package.json` in the monorepo. — *reason: npm is the source of truth for versions and the lockfile.* Full: [`docs/rules/npm-dependencies.md`](docs/rules/npm-dependencies.md).
+
+### Edit files with the file-editing tools, not shell scripts
+Modify files with the edit/write tools. Never use `sed`, `awk`, `perl`, `python`, `node`, `ruby`, or shell redirection to modify an existing file. Creating a brand-new file with the write tool is fine. If an edit fails to match, escalate — do not loop: (1) split it into smaller edits; (2) re-read and rewrite the whole file; (3) chunk a very large file; (4) if all fail, present the intended content in a fenced block and ask the human to paste it. — *reason: tool edits are reviewable and reversible; scripted edits evade review and can silently corrupt a file.* Full: [`docs/rules/file-edits.md`](docs/rules/file-edits.md).
+
+### GitHub operations: use the GitHub MCP server, not `gh`
+Create, update, and read PRs, issues, reviews, releases, labels, and repository data through the GitHub MCP server. If the server is unavailable, stop and ask the human to configure it — never fall back to `gh` silently. `gh` is allowed only for what MCP cannot do (e.g. `gh auth status`), and say why. — *reason: MCP gives structured, reliable API access with proper error handling.* Full: [`docs/rules/github-mcp.md`](docs/rules/github-mcp.md).
+
+### Filter JSON with `jq`
+When reading JSON responses or files, use `jq` to select only what is needed. Do not use `python` when `jq` can do the job. — *reason: unfiltered JSON floods the context window.* Full: [`docs/rules/json-and-jq.md`](docs/rules/json-and-jq.md).
+
+### Monorepos: run npm scripts with `-w <project>` from the root
+Prefer `npm -w <PROJECT> …` from the repo root. Do not `cd` into a workspace to run commands unless unavoidable. — *reason: root execution keeps the workspace graph and lockfile consistent.* Full: [`docs/rules/npm-workspaces.md`](docs/rules/npm-workspaces.md).
+
+### Process screenshots one at a time
+Never process images in bulk — bulk image handling causes an unrecoverable provider error. One image per turn. — *reason: bulk images break the session.* Full: [`docs/rules/screenshots.md`](docs/rules/screenshots.md).
+
+### Inclusive software
+Applies by default to anything touching identity, demographics, accessibility, communication, or decisions about people; override only with an explicit written justification. This project handles voice recordings of transgender people and other vulnerable users, so these rules are load-bearing, not decorative. The constraints to hold in mind:
+
+- **Data-minimise.** Do not collect a demographic field without naming (a) the decision it informs, (b) who can read it, (c) retention, and (d) the harm if it leaks. If you cannot justify all four, delete the field.
+- **Names:** a single mutable `full_name` — Unicode, ≥ 256 bytes, keyed by an opaque id. Never `first_name`/`last_name`; never validate against a name regex.
+- **Chosen vs legal name:** keep them separate; `chosen_name` is the default display everywhere. Protect against deadname leakage in denormalised reads, audit surfaces, and notification text.
+- **Gender and pronouns:** gender identity, sex assigned at birth, and legal sex marker are three separate optional fields; pronouns are free text (never "preferred"); never infer gender from name, voice, face, or behaviour.
+- **Accessibility:** WCAG 2.2 AA minimum; semantic HTML before ARIA; never convey information by colour alone; respect `prefers-reduced-motion`; interactive targets ≥ 24×24 CSS px.
+- **Internationalisation from the first commit:** externalise strings, use `Intl` for dates/numbers, support RTL if Arabic/Hebrew/Persian/Urdu is in scope, allow 30–40% text expansion.
+- **Terminology and copy:** use inclusive terms (allow-list/deny-list, primary/replica, main, placeholder); trauma-informed copy with no blame or urgency.
+- **Traceability:** cite the rule id in code comments and PR descriptions when applying a constraint (e.g. `// R1.5: chosen_name only`).
+
+Full rule set with sources: [`docs/rules/inclusive-software.md`](docs/rules/inclusive-software.md).
+
+### Communication style
+Write for an AuDHD reader: lead with the next action, answer the literal question first, number multi-step work, keep a consistent response shape across turns, restate state each turn, mark approximations explicitly, give every instruction a reason clause, and make completed work visible. No preamble, no recap, no closers. Full interface contract: [`docs/rules/audhd-communication.md`](docs/rules/audhd-communication.md). In opencode this is also available as the `i-am-audhd` skill.
