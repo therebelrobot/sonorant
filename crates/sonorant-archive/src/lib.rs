@@ -43,9 +43,11 @@ pub enum ArchiveError {
     Crypto(String),
     #[error("this archive was made by a newer version of the app (format v{found}); this version supports v{supported}. Update the app, then import again. Nothing was changed.")]
     UnsupportedFormat { found: u32, supported: u32 },
+    #[error("this archive uses a newer data schema (v{found}); this version supports v{supported}. Update the app, then import again. Nothing was changed.")]
+    UnsupportedSchema { found: u32, supported: u32 },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Counts {
     pub sessions: u64,
     pub utterances: u64,
@@ -413,6 +415,12 @@ pub fn ensure_supported(manifest: &Manifest) -> Result<(), ArchiveError> {
         return Err(ArchiveError::UnsupportedFormat {
             found: manifest.format_version,
             supported: FORMAT_VERSION,
+        });
+    }
+    if manifest.schema_version > SCHEMA_VERSION {
+        return Err(ArchiveError::UnsupportedSchema {
+            found: manifest.schema_version,
+            supported: SCHEMA_VERSION,
         });
     }
     Ok(())
