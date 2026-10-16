@@ -5,3 +5,6 @@ export const PCM = "sonorant/pcm";
 export const FRAMES = "sonorant/frames";
 export const READY = "sonorant/ready";
 export const ERROR = "sonorant/error";
+export const RECORD_START = "sonorant/record-start";
+export const RECORD_STOP = "sonorant/record-stop";
+export const RECORDING = "sonorant/recording";

@@ -16,6 +16,7 @@ This closes the standing "no browser verification" gap for M4.
 | Insecure context (S4.1) | `role="alert"` panel: correct heading/body, **Reload** button; no microphone requested | `insecure.png` |
 | Permission denied (S4.1) | `role="alert"` guidance with a **Try again** button (not a dead end) | `denied.png` |
 | Live practice (S4.2–S4.4) | Frames flow end-to-end (**2781 frames analysed**), pad draws with axis ticks, confidence overlay + label, summary lines, and the flags list | `practice.png` |
+| Opt-in recording (S5.2) | Off by default; turning it on writes a valid WAV to OPFS (`session-*.wav`, 1.79 MB, `RIFF`/`WAVE` magic); stopping finalizes it | `recording.png` |
 
 The end-to-end chain works: capture in the worklet, analysis on the worker, frames returned
 as a `Float32Array`, decoded at the ABI offsets, and rendered. The CSP did **not** block the

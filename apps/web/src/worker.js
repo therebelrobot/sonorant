@@ -1,14 +1,35 @@
-// Analysis Worker (TDD §6.1): receive PCM chunks and drive the wasm core.
-// Runs on a normal thread, so a slow frame here is not an audio glitch.
+// Analysis Worker (TDD §6.1, §7): receive PCM, drive the wasm core, and — only
+// when the member turned recording on — write the audio to OPFS.
 //
-// The `./vendor/sonorant/...` path is produced by the apps/web build, which copies
-// the `sonorant` package (src + pkg) into `dist/vendor/`.
+// The `./vendor/sonorant/...` path is produced by the apps/web build.
 
-import { loadEngine, framesView, FRAME_WORDS } from "./vendor/sonorant/src/index.js";
-import { PCM, FRAMES, READY, ERROR } from "./protocol.js";
+import { FRAME_WORDS, framesView, loadEngine } from "./vendor/sonorant/src/index.js";
+import { createRecorder } from "./store/recorder.js";
+import { opfsWavSink } from "./store/opfs.js";
+import {
+  ERROR,
+  FRAMES,
+  PCM,
+  READY,
+  RECORDING,
+  RECORD_START,
+  RECORD_STOP,
+} from "./protocol.js";
 
 let engine = null;
 let sampleRate = 44100;
+let recorder = null;
+
+function recorderFor(rate) {
+  if (!recorder) {
+    recorder = createRecorder({
+      openSink: (name) => opfsWavSink(name, rate),
+      onStateChange: ({ state, detail }) =>
+        self.postMessage({ type: RECORDING, state, detail }),
+    });
+  }
+  return recorder;
+}
 
 async function ensureEngine(rate) {
   if (!engine || rate !== sampleRate) {
@@ -20,12 +41,28 @@ async function ensureEngine(rate) {
 
 self.addEventListener("message", async (event) => {
   const data = event.data;
-  if (!data || data.type !== PCM) return;
+  if (!data) return;
+
+  if (data.type === RECORD_START) {
+    sampleRate = data.sampleRate ?? sampleRate;
+    await recorderFor(sampleRate).start(`session-${Date.now()}.wav`);
+    return;
+  }
+
+  if (data.type === RECORD_STOP) {
+    if (recorder) await recorder.stop();
+    return;
+  }
+
+  if (data.type !== PCM) return;
+
   try {
     await ensureEngine(data.sampleRate ?? sampleRate);
+    // Recording is off by default: this is a no-op unless the member turned it on.
+    if (recorder) await recorder.push(data.samples);
+
     const count = engine.push(data.samples);
     if (count > 0) {
-      // Copy out so the Float32Array can be transferred to the main thread.
       const frames = framesView(engine).slice();
       self.postMessage({ type: FRAMES, frames, count, words: FRAME_WORDS }, [frames.buffer]);
     }

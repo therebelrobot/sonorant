@@ -1,11 +1,11 @@
-// First-run flow and live pad (S4.1, S4.2, S4.3). DOM wiring only; the logic lives
-// in capture.js, capture-shim.js, frames.js and pad/.
+// First-run flow, live pad, recording and summary (S4.1–S4.4, S5.2). DOM wiring only.
 
 import { COPY, isSecure, openMicrophone } from "./capture.js";
 import { FRAME_WORDS, decodeFrames } from "./frames.js";
 import { PAD_TEXT, PadView } from "./pad/pad-view.js";
 import { activeFlags, isTrustworthy } from "./pad/pad-model.js";
 import { summarize } from "./pad/summary.js";
+import { RECORDING_COPY } from "./store/recorder.js";
 
 const PANELS = ["insecure", "permission", "denied", "practice", "status", "checking"];
 
@@ -16,6 +16,7 @@ const hideAll = () => { for (const id of PANELS) { const n = el(id); if (n) n.hi
 let pipeline = null;
 let pad = null;
 let framesSeen = 0;
+let recording = "off";
 const seenFlags = new Set();
 
 function onFrames(frames, count) {
@@ -54,6 +55,31 @@ function renderSummary(frame) {
   el("summary-caveat").textContent = summary.caveat ?? "";
 }
 
+/** Reflect the recording state in text and `aria-pressed`, never colour alone. */
+function renderRecording() {
+  const failed = recording === "error";
+  const on = recording === "recording";
+
+  el("recording-status").textContent = on ? RECORDING_COPY.on : RECORDING_COPY.off;
+  const toggle = el("record-toggle");
+  toggle.textContent = on ? RECORDING_COPY.onAction : RECORDING_COPY.offAction;
+  toggle.setAttribute("aria-pressed", on ? "true" : "false");
+
+  const error = el("recording-error");
+  error.hidden = !failed;
+  error.textContent = failed
+    ? `${RECORDING_COPY.error.heading} ${RECORDING_COPY.error.body}`
+    : "";
+  const cont = el("recording-continue");
+  cont.hidden = !failed;
+  cont.textContent = failed ? RECORDING_COPY.error.action : "";
+}
+
+function onRecording(state) {
+  recording = state;
+  renderRecording();
+}
+
 function applyCopy() {
   el("insecure-heading").textContent = COPY.insecure.heading;
   el("insecure-body").textContent = COPY.insecure.body;
@@ -76,8 +102,10 @@ async function attempt() {
   try {
     const stream = await openMicrophone(window);
     const { startCapture } = await import("./capture-shim.js");
-    pipeline = await startCapture(stream, { onFrames });
+    pipeline = await startCapture(stream, { onFrames, onRecording });
     pad = new PadView(el("pad"));
+    recording = "off";
+    renderRecording();
     hideAll();
     show("practice");
   } catch {
@@ -88,6 +116,7 @@ async function attempt() {
 
 function start() {
   applyCopy();
+  renderRecording();
   if (!isSecure(window)) {
     hideAll();
     show("insecure");
@@ -100,6 +129,10 @@ function start() {
 el("allow").addEventListener("click", attempt);
 el("retry").addEventListener("click", attempt);
 el("reload").addEventListener("click", () => window.location.reload());
+el("record-toggle").addEventListener("click", () =>
+  pipeline?.setRecording(recording !== "recording"),
+);
+el("recording-continue").addEventListener("click", () => pipeline?.setRecording(false));
 window.addEventListener("pagehide", () => pipeline?.stop());
 
 start();

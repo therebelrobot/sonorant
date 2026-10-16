@@ -52,6 +52,14 @@
         <p>Flags this session: <span id="pad-flags">none</span></p>
         <p id="frame-count" role="status" aria-live="polite"></p>
 
+        <section id="recording" aria-labelledby="recording-heading">
+          <h3 id="recording-heading">Recording</h3>
+          <p id="recording-status"></p>
+          <button id="record-toggle" type="button" aria-pressed="false"></button>
+          <p id="recording-error" role="alert" hidden></p>
+          <button id="recording-continue" type="button" hidden></button>
+        </section>
+
         <section id="summary" aria-labelledby="summary-heading">
           <h3 id="summary-heading">Summary</h3>
           <p id="summary-caveat" role="status" aria-live="polite"></p>
