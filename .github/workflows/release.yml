@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    name: Build and publish artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build (wasm, web bundle, native CLI)
+        run: |
+          npm run wasm:build
+          npm run build
+          cargo build --release -p sonorant-cli
+
+      # The gates that must hold for a release (licences, advisories, egress/CSP).
+      - name: Licence and advisory gate
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+      - name: Egress origin scan + CSP
+        run: npm run check:bundle
+
+      - name: Package artifacts
+        run: |
+          mkdir -p dist
+          tar -czf "dist/sonorant-web-${GITHUB_REF_NAME}.tar.gz" -C apps/web dist
+          tar -czf "dist/sonorant-cli-${GITHUB_REF_NAME}-x86_64-unknown-linux-gnu.tar.gz" -C target/release sonorant-cli
+          cp packages/sonorant/pkg/sonorant_ffi_bg.wasm "dist/sonorant_ffi_bg-${GITHUB_REF_NAME}.wasm"
+          (cd dist && sha256sum ./* > "SHA256SUMS-${GITHUB_REF_NAME}.txt")
+          ls -la dist
+
+      - name: Software bill of materials
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: dist/sbom.spdx.json
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "dist/*"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: true
