@@ -4,7 +4,9 @@
 export const EXIT = { OK: 0, INPUT: 1, USAGE: 2 };
 
 export class CliError extends Error {
-  constructor(message, exitCode = EXIT.INPUT) {
+  exitCode: number;
+
+  constructor(message: string, exitCode: number = EXIT.INPUT) {
     super(message);
     this.name = "CliError";
     this.exitCode = exitCode;

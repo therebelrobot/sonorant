@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { STATUS, overallStatus, summarize } from "../src/summary.js";
+import { STATUS, overallStatus, summarize } from "../src/summary.ts";
 
 const frame = (over = {}) => ({
   t_ms: 0,

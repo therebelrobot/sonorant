@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { FRAME_WORDS, decodeFrames } from "../src/frames.js";
+import { FRAME_WORDS, decodeFrames } from "../src/frames.ts";
 
 function oneFrame() {
   const w = new Float32Array(FRAME_WORDS);

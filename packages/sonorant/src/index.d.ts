@@ -7,9 +7,21 @@ export interface Engine {
   frames_ptr(): number;
   frames_len(): number;
   reset(): void;
+  free(): void;
   core_version(): string;
   abi_version(): number;
 }
+
+export interface DecodedFrame {
+  t_ms: number;
+  f0_hz: number;
+  f0_confidence: number;
+  formants: Array<{ hz: number; bandwidth_hz: number; confidence: number }>;
+  flags: number;
+  [key: string]: unknown;
+}
+
+export function decodeFrames(words: Float32Array): DecodedFrame[];
 
 export interface LoadOptions {
   wasmBytes?: Uint8Array;

@@ -3,12 +3,12 @@
 //
 // The `./vendor/sonorant/...` path is produced by the apps/web build.
 
-import { FRAME_WORDS, framesView, loadEngine } from "./vendor/sonorant/src/index.js";
+import { FRAME_WORDS, framesView, loadEngine } from "./vendor/sonorant/dist/index.js";
 import {
   describeArchive,
   exportArchive,
   importArchive,
-} from "./vendor/sonorant/src/index.js";
+} from "./vendor/sonorant/dist/index.js";
 import { createRecorder } from "./store/recorder.ts";
 import { opfsWavSink } from "./store/opfs.ts";
 import {

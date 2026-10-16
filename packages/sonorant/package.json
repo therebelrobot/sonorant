@@ -3,15 +3,20 @@
   "version": "0.1.0",
   "scripts": {
     "test": "node --test",
-    "build": "echo \"sonorant: wasm artifacts are committed under pkg/ (rebuild with npm run wasm:build at the repo root)\""
+    "build": "esbuild src/index.ts --bundle --format=esm --external:../pkg/* --outfile=dist/index.js",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "license": "Unlicense",
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "types": "src/index.d.ts",
   "files": [
     "src",
     "pkg",
     "README.md"
-  ]
+  ],
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
 }

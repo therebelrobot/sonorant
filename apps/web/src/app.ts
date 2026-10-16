@@ -3,7 +3,7 @@
 
 import { COPY, isSecure, openMicrophone } from "./capture.ts";
 import { startCapture } from "./capture-shim.ts";
-import { FRAME_WORDS, decodeFrames } from "./vendor/sonorant/src/index.js";
+import { FRAME_WORDS, decodeFrames } from "./vendor/sonorant/dist/index.js";
 import { PAD_TEXT, PadView } from "./pad/pad-view.ts";
 import { activeFlags, isTrustworthy } from "./pad/pad-model.ts";
 import { summarize } from "./pad/summary.ts";

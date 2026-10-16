@@ -10,11 +10,11 @@ import initWasm, {
   archive_export,
   archive_import,
 } from "../pkg/sonorant_ffi.js";
-import { CORE_ABI_VERSION, FRAME_WORDS } from "./abi.js";
-import { EXPECTED_WASM_SHA256 } from "./wasm-hash.js";
+import { CORE_ABI_VERSION, FRAME_WORDS } from "./abi.ts";
+import { EXPECTED_WASM_SHA256 } from "./wasm-hash.ts";
 
 export { CORE_ABI_VERSION, FRAME_WORDS };
-export { decodeFrames } from "./frames.js";
+export { decodeFrames } from "./frames.ts";
 
 /** The wasm instance's linear memory, captured at load. */
 let wasmMemory;

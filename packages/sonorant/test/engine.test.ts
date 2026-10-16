@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { loadEngine, framesView, FRAME_WORDS } from "../src/index.js";
+import { loadEngine, framesView, FRAME_WORDS } from "../src/index.ts";
 
 const wasmUrl = new URL("../pkg/sonorant_ffi_bg.wasm", import.meta.url);
 

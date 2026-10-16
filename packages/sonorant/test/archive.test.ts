@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { describeArchive, exportArchive, importArchive } from "../src/index.js";
+import { describeArchive, exportArchive, importArchive } from "../src/index.ts";
 
 const wasmUrl = new URL("../pkg/sonorant_ffi_bg.wasm", import.meta.url);
 const EMPTY = "{\"sessions\":[],\"utterances\":[],\"metric_series\":[]}";

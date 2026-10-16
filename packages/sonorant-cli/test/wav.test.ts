@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parseWav } from "../src/wav.js";
+import { parseWav } from "../src/wav.ts";
 
 /** Build a 32-bit float WAV from interleaved samples. */
 function floatWav(samples, { sampleRate = 44100, channels = 1 } = {}) {

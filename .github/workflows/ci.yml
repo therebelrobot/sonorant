@@ -45,6 +45,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Type-check TypeScript sources
+        run: npm run typecheck --workspaces --if-present
       - run: npm run build
       # Egress origin scan + CSP check on the built bundle (S0.3, TDD §12).
       - run: npm run check:bundle
@@ -62,7 +64,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      # Type-check the web sources (TypeScript; allowJs bridges the remaining JS).
-      - run: npm run typecheck -w @sonorant/web
       # Automated first-run / live / history / archive checks (phase 8).
       - run: npm run check:web

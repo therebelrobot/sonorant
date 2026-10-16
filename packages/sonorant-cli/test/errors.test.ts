@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { UNSUPPORTED, inputError, mapError } from "../src/errors.js";
+import { UNSUPPORTED, inputError, mapError } from "../src/errors.ts";
 
 test("a wasm hash mismatch maps to the phase-6 copy", () => {
   const mapped = mapError(

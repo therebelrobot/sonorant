@@ -11,12 +11,12 @@ import { dirname, join } from "node:path";
 import { render } from "ink";
 import React, { createElement as h } from "react";
 
-import { analyse } from "./analyse.js";
-import { ResultView } from "./app.js";
-import { CliError, UNSUPPORTED, UsageError, inputError, mapError } from "./errors.js";
-import { countFrames, runNativeFile } from "./native.js";
-import { summarize } from "./summary.js";
-import { parseWav } from "./wav.js";
+import { analyse } from "./analyse.ts";
+import { ResultView } from "./app.ts";
+import { CliError, UNSUPPORTED, UsageError, inputError, mapError } from "./errors.ts";
+import { countFrames, runNativeFile } from "./native.ts";
+import { summarize } from "./summary.ts";
+import { parseWav } from "./wav.ts";
 
 export const VERSION = "0.1.0";
 
@@ -90,7 +90,15 @@ async function batchCommand(args, io, deps) {
  * @param {string[]} argv
  * @param {{ io?: object, readFile?: Function, analyse?: Function, runNative?: Function }} [deps]
  */
-export async function main(argv, deps = {}) {
+export async function main(
+  argv: string[],
+  deps: {
+    io?: { log: (message: string) => void };
+    readFile?: (path: string) => Promise<Uint8Array>;
+    analyse?: (input: unknown) => Promise<unknown[]>;
+    runNative?: (file: string) => Promise<string>;
+  } = {},
+) {
   const io = deps.io ?? console;
   const resolved = {
     readFile,

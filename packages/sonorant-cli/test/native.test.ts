@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 
-import { countFrames, runNativeFile } from "../src/native.js";
+import { countFrames, runNativeFile } from "../src/native.ts";
 
 function fakeChild({ code = 0, stdout = "", stderr = "" } = {}) {
   const child = new EventEmitter();
