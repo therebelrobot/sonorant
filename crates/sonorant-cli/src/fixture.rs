@@ -7,7 +7,8 @@
 
 use std::fs;
 
-use sonorant_core::{tolerances, AnalysisFrame, AnalysisParams, CORE_VERSION};
+use sonorant_analysis::{AnalysisFrame, AnalysisParams};
+use sonorant_core::{tolerances, CORE_VERSION};
 
 use crate::wav;
 use crate::{analyze_pcm, parse_number, params_for};

@@ -1,20 +1,15 @@
 //! The `Analyzer` contract and the default frame-based implementation (TDD §4.1).
 //!
-//! The session state machine and the `scale_semitones` baseline belong to the
-//! `sonorant-analysis` crate (S2.1/S2.2). This module is the single-frame pipeline
-//! plus framing, which the CLI (S1.3) and the WASM surface (S3.1) drive.
+//! The session state machine and the `scale_semitones` baseline are added here in
+//! S2.2. This module is the single-frame pipeline plus framing, which the CLI
+//! (S1.3) and the WASM surface (S3.1) drive.
 
-use crate::cepstrum;
-use crate::features;
-use crate::formants::{self, Formant, MAX_FORMANTS};
+use sonorant_core::{cepstrum, features, formants, lpc, pitch, spectrum, window};
+
 use crate::frame::{flags, AnalysisFrame, AnalysisParams};
-use crate::lpc;
-use crate::pitch;
-use crate::spectrum;
-use crate::window;
 
 /// The shared contract every surface drives (TDD §4.1). No acoustic maths in any
-/// caller; the maths lives inside the implementation.
+/// caller; the maths lives in `sonorant-core`.
 pub trait Analyzer {
     fn configure(&mut self, params: AnalysisParams);
     /// Consume PCM, emit zero or more frames into internal state. Returns the
@@ -72,8 +67,8 @@ impl FrameAnalyzer {
         );
         let cpp = cepstrum::cpp(&cepstrum::real_cepstrum(&framed), sr);
 
-        let mut slot = [Formant::default(); MAX_FORMANTS];
-        for (i, f) in found.iter().take(MAX_FORMANTS).enumerate() {
+        let mut slot = [formants::Formant::default(); formants::MAX_FORMANTS];
+        for (i, f) in found.iter().take(formants::MAX_FORMANTS).enumerate() {
             slot[i] = *f;
         }
 
@@ -94,7 +89,7 @@ impl FrameAnalyzer {
             tilt_db_per_oct: features::spectral_tilt_db_per_oct(&magnitude, sr),
             h1_h2_db: features::h1_h2_db(&magnitude, sr, pitch_est.f0_hz),
             centroid_hz: features::centroid_hz(&magnitude, sr),
-            // Session baseline is supplied by sonorant-analysis (S2.2).
+            // Session baseline is supplied by the session layer (S2.2).
             scale_semitones: 0.0,
             rms_dbfs: features::rms_dbfs(frame),
             // Uncalibrated until a calibration exists (S7); flagged UNCALIBRATED.

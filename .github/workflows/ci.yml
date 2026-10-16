@@ -19,11 +19,11 @@ jobs:
         run: |
           cargo build --workspace --locked
           cargo test --workspace --locked
-      # The core must build for the browser target (TDD §1: one core, four targets).
-      - name: Core builds for wasm32
+      # The pure crates must build for the browser target (TDD §1: one core, four targets).
+      - name: Core and analysis build for wasm32
         run: |
           rustup target add wasm32-unknown-unknown
-          cargo build -p sonorant-core --target wasm32-unknown-unknown --locked
+          cargo build -p sonorant-core -p sonorant-analysis --target wasm32-unknown-unknown --locked
       # Licence and advisory gate (S0.2, TDD §5). Reads deny.toml at the repo root.
       - name: Licence and advisory gate
         uses: EmbarkStudios/cargo-deny-action@v2

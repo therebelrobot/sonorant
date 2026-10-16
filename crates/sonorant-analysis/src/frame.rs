@@ -1,7 +1,10 @@
-//! The analysis core contract types (TDD §4.1): `AnalysisFrame`, `AnalysisParams`,
-//! and the frame flag bitfield.
+//! The analysis contract types (TDD §4.1): `AnalysisFrame`, `AnalysisParams`, and
+//! the frame flag bitfield.
+//!
+//! `Formant` is a numerics type and lives in `sonorant-core`; `AnalysisFrame`
+//! embeds it. The `Analyzer` trait and the frame pipeline are in `analyzer.rs`.
 
-use crate::formants::{Formant, MAX_FORMANTS};
+use sonorant_core::formants::{Formant, MAX_FORMANTS};
 
 /// Frame flags, stored as bits of the `f32` `flags` field so the struct stays
 /// all-`f32` and reads as a flat `Float32Array` (TDD §4.1, §4.4).
@@ -39,8 +42,7 @@ pub struct AnalysisFrame {
     pub h1_h2_db: f32,
     pub centroid_hz: f32,
     /// Vowel-independent formant scale, semitones, relative to the session's own
-    /// baseline. Supplied by the `sonorant-analysis` session layer (S2.2); `0.0`
-    /// until then.
+    /// baseline. Supplied by the session layer (S2.2); `0.0` until then.
     pub scale_semitones: f32,
     pub rms_dbfs: f32,
     /// `NaN` unless a calibration is active (TDD §4.2).
@@ -79,7 +81,7 @@ impl AnalysisParams {
             pre_emphasis: 0.97,
             lpc_order: default_lpc_order(sample_rate),
             max_formant_hz: 5500.0,
-            voicing_threshold: crate::pitch::DEFAULT_THRESHOLD,
+            voicing_threshold: sonorant_core::pitch::DEFAULT_THRESHOLD,
         }
     }
 }

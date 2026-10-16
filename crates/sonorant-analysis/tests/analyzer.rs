@@ -1,7 +1,8 @@
 //! S1.2 tests: `AnalysisParams` defaults, the `Analyzer` push/drain contract, and
-//! `reset`.
+//! `reset`. (The pipeline now lives in `sonorant-analysis`.)
 
-use sonorant_core::{synthetic, AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
+use sonorant_analysis::{flags, AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
+use sonorant_core::synthetic;
 
 const SR: f32 = 44100.0;
 
@@ -39,11 +40,10 @@ fn push_drain_counts_match() {
     assert_eq!(drained, pushed, "drain count must match frames written");
     assert_eq!(a.drain(&mut out), 0, "second drain yields nothing");
 
-    // The first frame is voiced and carries the uncalibrated marker.
     assert!(out[0].f0_hz > 0.0);
     assert!((out[0].f0_hz - 150.0).abs() / 150.0 < 0.05);
     assert!(out[0].spl_db.is_nan());
-    assert!(out[0].flags >= sonorant_core::flags::UNCALIBRATED);
+    assert!(out[0].flags >= flags::UNCALIBRATED);
 }
 
 #[test]

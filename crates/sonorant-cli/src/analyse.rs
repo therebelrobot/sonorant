@@ -2,7 +2,7 @@
 
 use std::io::{self, BufWriter, Write};
 
-use sonorant_core::{flags, AnalysisFrame};
+use sonorant_analysis::{flags, AnalysisFrame};
 
 use crate::wav;
 use crate::{analyze_pcm, parse_number, params_for};

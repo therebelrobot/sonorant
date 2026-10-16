@@ -8,7 +8,7 @@ mod wav;
 use std::env;
 use std::process::ExitCode;
 
-use sonorant_core::{AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
+use sonorant_analysis::{AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
 
 pub(crate) const EXIT_OK: u8 = 0;
 pub(crate) const EXIT_INPUT: u8 = 1;

@@ -76,6 +76,9 @@ dependencies = [
 [[package]]
 name = "sonorant-analysis"
 version = "0.1.0"
+dependencies = [
+ "sonorant-core",
+]
 
 [[package]]
 name = "sonorant-archive"
@@ -94,6 +97,7 @@ name = "sonorant-cli"
 version = "0.1.0"
 dependencies = [
  "hound",
+ "sonorant-analysis",
  "sonorant-core",
 ]
 
