@@ -56,6 +56,18 @@ pub fn vowel(f0_hz: f32, formants: &[(f32, f32)], sample_rate: f32, duration_s: 
         x = y;
     }
 
+    // Glottal source + radiation: a shallow −6 dB/octave tilt, which is what the
+    // pipeline's pre-emphasis (TDD §4.1) exists to compensate. Without it the
+    // synthetic source is far brighter than a real voice and the pre-emphasis
+    // biases the formant estimates upward.
+    let a = (-2.0 * core::f32::consts::PI * 500.0 / sample_rate).exp();
+    let mut prev = 0.0f32;
+    for v in x.iter_mut() {
+        let out = (1.0 - a) * *v + a * prev;
+        prev = out;
+        *v = out;
+    }
+
     let peak = x.iter().fold(0.0f32, |m, v| m.max(v.abs()));
     if peak > 0.0 {
         for v in x.iter_mut() {

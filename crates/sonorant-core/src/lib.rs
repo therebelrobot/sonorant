@@ -14,9 +14,14 @@ pub mod lpc;
 pub mod pitch;
 pub mod spectrum;
 pub mod synthetic;
+pub mod tolerances;
 pub mod window;
 
 pub use analyzer::{Analyzer, FrameAnalyzer};
 pub use formants::{Formant, MAX_FORMANTS};
 pub use frame::{flags, AnalysisFrame, AnalysisParams};
 pub use pitch::Pitch;
+
+/// The core version that produced stored data (TDD §9). Semver; a MAJOR bump
+/// means a published measure can shift beyond its documented tolerance.
+pub const CORE_VERSION: &str = env!("CARGO_PKG_VERSION");

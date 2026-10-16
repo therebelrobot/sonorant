@@ -36,7 +36,7 @@ fn pitch_tracks_synthetic_f0() {
         println!("f0={f0} measured={} conf={}", p.f0_hz, p.confidence);
         assert!(p.f0_hz > 0.0, "frame should be voiced at f0={f0}");
         assert!(
-            ((p.f0_hz - f0) / f0).abs() < 0.02,
+            ((p.f0_hz - f0) / f0).abs() < sonorant_core::tolerances::F0_REL,
             "f0 {f0} measured {}",
             p.f0_hz
         );
@@ -64,7 +64,7 @@ fn formants_track_synthetic_vowel() {
     assert!(fs.len() >= 3, "expected >=3 formants, got {}", fs.len());
     for (f, &e) in fs.iter().zip(expected.iter()) {
         assert!(
-            ((f.hz - e) / e).abs() < 0.10,
+            ((f.hz - e) / e).abs() < sonorant_core::tolerances::FORMANT_REL,
             "formant expected {e} Hz, measured {} Hz",
             f.hz
         );
