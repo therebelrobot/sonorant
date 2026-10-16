@@ -118,6 +118,25 @@ fn horner(c: &[Complex], x: Complex) -> Complex {
     acc
 }
 
+/// Vowel-independent formant scale: the geometric mean of the measured formant
+/// frequencies, in Hz. `None` when fewer than two formants are present.
+///
+/// This is the per-frame quantity the session baseline is a ratio against
+/// (TDD §4.1). It is a documented placeholder for a dedicated vocal-tract-length
+/// estimate; on a controlled exercise (constant vowel) it tracks resonance.
+pub fn formant_scale_hz(formants: &[Formant]) -> Option<f32> {
+    let freqs: Vec<f32> = formants
+        .iter()
+        .map(|f| f.hz)
+        .filter(|hz| hz.is_finite() && *hz > 0.0)
+        .collect();
+    if freqs.len() < 2 {
+        return None;
+    }
+    let mean_ln = freqs.iter().map(|hz| hz.ln()).sum::<f32>() / freqs.len() as f32;
+    Some(mean_ln.exp())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

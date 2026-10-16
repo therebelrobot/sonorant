@@ -43,8 +43,9 @@ The core never emits a non-finite value outside these cases (TDD §14):
 All other outputs are finite for all inputs, including silence, clipping, and `NaN`
 input (see `crates/sonorant-core/tests/numerics.rs`).
 
-`scale_semitones` is `0.0` in the S1.2 frame analyzer as a placeholder; the session
-baseline that makes it a real log-ratio is supplied by `sonorant-analysis` (S2.2).
+`scale_semitones` is `0.0` until the session baseline is established;
+`sonorant-analysis::Session` (S2.2) then sets it as `12 * log2(formant_scale / baseline)`,
+where `formant_scale` is the geometric mean of the measured formants.
 
 ## Changing these numbers
 
