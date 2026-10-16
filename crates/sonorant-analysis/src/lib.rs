@@ -12,3 +12,7 @@ pub mod session;
 pub use analyzer::{Analyzer, FrameAnalyzer};
 pub use frame::{flags, AnalysisFrame, AnalysisParams};
 pub use session::{Session, SessionAnalyzer, DEFAULT_BASELINE_FRAMES};
+
+/// Versions the `AnalysisFrame` memory layout only (TDD §9.5). A mismatch between
+/// the JS reader and the core is a hard startup failure, not a silent misread.
+pub const CORE_ABI_VERSION: u32 = 1;

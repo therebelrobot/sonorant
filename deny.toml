@@ -51,6 +51,14 @@ unused-allowed-license = "allow"
 # CI enforces the allowlist but cannot see intent, so an intentional MPL
 # exception must be recorded here as well.
 
+# Build-time-only and unavoidable while using `wasm-bindgen`: `unicode-ident`
+# (via `proc-macro2`/`syn`) declares "(MIT OR Apache-2.0) AND Unicode-3.0".
+# Unicode-3.0 is OSI-approved and FSF-libre (permissive). Scoped to this one crate
+# rather than widening the general allowlist.
+[[licenses.exceptions]]
+name = "unicode-ident"
+allow = ["Unicode-3.0"]
+
 [sources]
 # Everything resolves from crates.io (TDD §5, §12). No git dependencies and no
 # alternate registries, so the supply chain stays auditable and builds
