@@ -1,4 +1,8 @@
 // sonorant-cli (npm) — Ink orchestration CLI (TDD §3). No acoustic maths.
+//
+// Two routes through the same `Analyzer` contract:
+//   analyse <wav>          the WASM core, via the `sonorant` wrapper
+//   batch  <wav...>        the native Rust binary, shelled out to
 
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -9,8 +13,21 @@ import React, { createElement as h } from "react";
 
 import { analyse } from "./analyse.js";
 import { ResultView } from "./app.js";
+import { CliError, UNSUPPORTED, UsageError, inputError, mapError } from "./errors.js";
+import { countFrames, runNativeFile } from "./native.js";
 import { summarize } from "./summary.js";
 import { parseWav } from "./wav.js";
+
+export const VERSION = "0.1.0";
+
+const USAGE = `sonorant-cli — voice analysis
+
+USAGE:
+    sonorant-cli analyse <file.wav>              analyse with the WASM core
+    sonorant-cli batch <file.wav> [<file.wav>...] [--quiet]
+                                                 batch analyser (native binary)
+    sonorant-cli --help                          print this help
+    sonorant-cli --version                       print the version`;
 
 const require = createRequire(import.meta.url);
 
@@ -20,16 +37,81 @@ export function wasmPath() {
   return join(dirname(entry), "..", "pkg", "sonorant_ffi_bg.wasm");
 }
 
-export async function main(argv) {
-  const [command, input] = argv;
-  if (command !== "analyse" || !input) {
-    throw new Error("usage: sonorant-cli analyse <file.wav>");
+async function analyseCommand(args, io, deps) {
+  const input = args.find((arg) => !arg.startsWith("-"));
+  if (!input) throw new UsageError("usage: sonorant-cli analyse <file.wav>");
+
+  let bytes;
+  try {
+    bytes = new Uint8Array(await deps.readFile(input));
+  } catch {
+    throw new CliError(inputError(input));
   }
 
-  const wav = parseWav(new Uint8Array(await readFile(input)));
-  const wasmBytes = new Uint8Array(await readFile(wasmPath()));
-  const frames = await analyse({ wasmBytes, sampleRate: wav.sampleRate, samples: wav.samples });
-  const { status, lines } = summarize(frames);
+  let wav;
+  try {
+    wav = parseWav(bytes);
+  } catch {
+    throw new CliError(UNSUPPORTED);
+  }
 
+  let frames;
+  try {
+    const wasmBytes = new Uint8Array(await deps.readFile(wasmPath()));
+    frames = await deps.analyse({ wasmBytes, sampleRate: wav.sampleRate, samples: wav.samples });
+  } catch (error) {
+    throw new CliError(mapError(error));
+  }
+
+  const { status, lines } = summarize(frames);
   render(h(ResultView, { status, lines }));
+}
+
+async function batchCommand(args, io, deps) {
+  const quiet = args.includes("--quiet");
+  const files = args.filter((arg) => !arg.startsWith("-"));
+  if (files.length === 0) {
+    throw new UsageError("usage: sonorant-cli batch <file.wav> [<file.wav>...] [--quiet]");
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    if (!quiet) io.log(`Analysing ${i + 1} of ${files.length}: ${files[i]}...`);
+    let csv;
+    try {
+      csv = await deps.runNative(files[i]);
+    } catch (error) {
+      throw new CliError(mapError(error));
+    }
+    io.log(`${files[i]}: ok (${countFrames(csv)} frame(s))`);
+  }
+}
+
+/**
+ * @param {string[]} argv
+ * @param {{ io?: object, readFile?: Function, analyse?: Function, runNative?: Function }} [deps]
+ */
+export async function main(argv, deps = {}) {
+  const io = deps.io ?? console;
+  const resolved = {
+    readFile,
+    analyse,
+    runNative: (file) => runNativeFile(file),
+    ...deps,
+    io,
+  };
+
+  const [command, ...args] = argv;
+  if (command === "--help" || command === "-h") {
+    io.log(USAGE);
+    return;
+  }
+  if (!command) throw new UsageError(USAGE);
+  if (command === "--version" || command === "-V") {
+    io.log(`sonorant-cli ${VERSION}`);
+    return;
+  }
+  if (command === "analyse") return analyseCommand(args, io, resolved);
+  if (command === "batch") return batchCommand(args, io, resolved);
+
+  throw new UsageError(`unknown command: ${command}`);
 }
