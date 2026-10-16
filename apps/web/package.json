@@ -2,10 +2,10 @@
   "name": "@sonorant/web",
   "version": "0.1.0",
   "scripts": {
-    "test": "echo \"S0.1 scaffold: no tests yet\"",
-    "build": "rm -rf dist && cp -R public dist"
+    "test": "node --test",
+    "build": "rm -rf dist && cp -R public dist && cp -R src/. dist/"
   },
   "license": "Unlicense",
-  "type": "commonjs",
+  "type": "module",
   "private": true
 }

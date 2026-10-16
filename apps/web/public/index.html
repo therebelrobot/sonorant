@@ -12,8 +12,33 @@
   <body>
     <main>
       <h1>Sonorant</h1>
-      <p>Local-first voice analysis and training. Nothing leaves this device; there is no server.</p>
-      <p>Pre-implementation scaffold (M0 / S0.3). The practice UI arrives in M4.</p>
+
+      <p id="checking">Checking your connection&hellip;</p>
+
+      <section id="insecure" role="alert" hidden>
+        <h2 id="insecure-heading"></h2>
+        <p id="insecure-body"></p>
+        <button id="reload" type="button"></button>
+      </section>
+
+      <section id="permission" hidden>
+        <h2 id="permission-heading"></h2>
+        <p id="permission-body"></p>
+        <button id="allow" type="button"></button>
+      </section>
+
+      <p id="status" role="status" aria-live="polite" hidden></p>
+
+      <section id="denied" role="alert" hidden>
+        <h2 id="denied-heading"></h2>
+        <p id="denied-body"></p>
+        <button id="retry" type="button"></button>
+      </section>
+
+      <section id="ready" hidden>
+        <p>Microphone ready. The practice view arrives in a later step.</p>
+      </section>
     </main>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
