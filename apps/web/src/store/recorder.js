@@ -26,7 +26,7 @@ export const RECORDING_COPY = {
 /**
  * @param {{ openSink: (name: string) => Promise<{write: Function, close: Function}>, onStateChange?: Function }} deps
  */
-export function createRecorder({ openSink, onStateChange } = {}) {
+export function createRecorder({ openSink, onStateChange }) {
   let state = RecordingState.OFF;
   let sink = null;
 

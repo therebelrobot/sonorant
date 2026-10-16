@@ -27,7 +27,9 @@ function percentile(sorted, p) {
   return sorted[index];
 }
 
-/** `{median, p05, p95, mean}` for the finite values, or null when there are none. */
+/** `{median, p05, p95, mean}` for the finite values, or null when there are none.
+ * @param {number[]} values
+ */
 export function statBlock(values) {
   const finite = values.filter((v) => Number.isFinite(v));
   if (finite.length === 0) return null;
@@ -42,10 +44,10 @@ export function statBlock(values) {
 }
 
 /**
- * @param {Array<object>} frames decoded frames for one utterance
+ * @param {Array<import("../types").Frame>} frames decoded frames for one utterance
  * @param {{ coreVersion: string, calibrated?: boolean }} options
  */
-export function buildAnalysisSummary(frames, { coreVersion, calibrated = false } = {}) {
+export function buildAnalysisSummary(frames, { coreVersion, calibrated = false }) {
   const voiced = frames.filter((f) => f.f0_hz > 0);
 
   const formantConfidences = [];

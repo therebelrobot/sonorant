@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "scripts": {
     "test": "node --test",
-    "build": "rm -rf dist && cp -R public dist && cp -R src/. dist/ && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/src dist/vendor/sonorant/src && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg"
+    "build": "rm -rf dist && cp -R public dist && rsync -a --exclude \"*.ts\" src/ dist/ && esbuild src/store/bundle.ts --outfile=dist/store/bundle.js --format=esm && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/src dist/vendor/sonorant/src && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "license": "Unlicense",
   "type": "module",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
 }

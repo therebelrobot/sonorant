@@ -1,9 +1,9 @@
-// S6-wiring tests: the store rows map to and from the archive bundle.
+// Tests for the bundle mapping. Written in TypeScript; Node strips the types.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { EMPTY_BUNDLE_JSON, fromBundle, metricSeriesId, toBundle } from "../src/store/bundle.js";
+import { EMPTY_BUNDLE_JSON, fromBundle, metricSeriesId, toBundle } from "../src/store/bundle.ts";
 
 test("rows map to keyed records and back", () => {
   const sessions = [{ id: "s1", core_version: "0.1.0" }];
