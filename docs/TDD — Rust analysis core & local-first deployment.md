@@ -296,8 +296,9 @@ mismatch between the JS reader and the core is a hard startup failure, not a sil
 (GPL). Praat is permitted as an **offline validation oracle** that ships nothing (§14).
 
 **CI gate:** `cargo-deny` with `licenses` and `advisories` enabled, `cargo-audit`, and a `deny.toml`
-allowlist restricted to MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 with an explicit exception
-comment for any MPL crate. Any new dependency without a verified licence fails the build, not the
+allowlist restricted to MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 / Unlicense with an explicit
+exception comment for any MPL crate. (Unlicense is the project's own licence and is
+public-domain-equivalent; it was added to the allowlist 2026-10-16 by owner direction.) Any new dependency without a verified licence fails the build, not the
 review. This matters more for a solo project than a staffed one: there is no legal department, so
 the gate has to be mechanical.
 

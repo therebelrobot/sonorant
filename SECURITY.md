@@ -33,7 +33,7 @@ There is no telemetry, no analytics, and no crash reporter. This is a constraint
 
 ## Supply chain
 
-- **`cargo-deny`** licence and advisory gates, with a `deny.toml` allowlist restricted to **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0**. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment. Any new dependency without a verified licence fails the build, not the review.
+- **`cargo-deny`** licence and advisory gates, with a `deny.toml` allowlist restricted to **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 / Unlicense**. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment. Any new dependency without a verified licence fails the build, not the review.
 - **`cargo-audit`** for known advisories.
 - **SBOM and provenance attestations** on published artifacts.
 - **The shipped `.wasm` hash is recorded and compared at startup**; a mismatch is a hard failure.

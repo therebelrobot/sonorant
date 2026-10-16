@@ -86,7 +86,7 @@ There is no network client in the codebase. No telemetry, no analytics, no crash
 
 ### 4. Utility crates only; the acoustic layer is written in-house
 
-Dependency licences are gated by `cargo-deny` (config: [`deny.toml`](deny.toml); verification record: [`docs/dependency-licences.md`](docs/dependency-licences.md)) with an allowlist of **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0**. Any new dependency without a verified licence fails the build, not the review. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment in `deny.toml`.
+Dependency licences are gated by `cargo-deny` (config: [`deny.toml`](deny.toml); verification record: [`docs/dependency-licences.md`](docs/dependency-licences.md)) with an allowlist of **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 / Unlicense**. Any new dependency without a verified licence fails the build, not the review. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment in `deny.toml`.
 
 Do not depend on crates built for competing products in the same market (e.g. `loqa-voice-dsp`, `syne_audio_dsp`) — reference reading only. Do not add GPL/AGPL dependencies (Praat, Essentia, aubio). Praat is permitted only as an offline validation oracle that ships nothing.
 

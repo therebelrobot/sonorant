@@ -72,7 +72,7 @@ cargo deny check
 cargo audit
 ```
 
-Any new dependency without a verified licence fails the build. The allowlist is **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0**. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment.
+Any new dependency without a verified licence fails the build. The allowlist is **MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 / Unlicense**. MPL is file-level copyleft — acceptable if unmodified, with an explicit exception comment.
 
 ---
 

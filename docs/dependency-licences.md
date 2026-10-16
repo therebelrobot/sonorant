@@ -8,7 +8,7 @@
 
 ## How to read the verdict column
 
-- **Allow** — declared licence is inside the TDD §5 allowlist (MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0).
+- **Allow** — declared licence is inside the TDD §5 allowlist (MIT / Apache-2.0 / BSD-3-Clause / ISC / MPL-2.0 / Unlicense).
 - **Allow (exception)** — inside the allowlist but carries a standing obligation (MPL file-level copyleft ⇒ use unmodified only).
 - **Reference only** — must never become a dependency; read for prior art, then write the tracker in-house (TDD §5).
 - **Evaluate** — may become a dependency only after the in-repo source is read; not currently a dependency.

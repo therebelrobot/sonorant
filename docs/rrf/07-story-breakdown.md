@@ -104,7 +104,7 @@ off the critical path. See §6.
 **Acceptance criteria**
 
 - Given a dependency whose licence is outside the allowlist (MIT / Apache-2.0 / BSD-3-Clause / ISC /
-  MPL-2.0), When CI runs, Then the build fails rather than the review. — *Owner: Engineering*
+  MPL-2.0 / Unlicense), When CI runs, Then the build fails rather than the review. — *Owner: Engineering*
 - Given an MPL-2.0 dependency used unmodified, When CI runs, Then it passes only with an explicit
   exception comment in `deny.toml`. — *Owner: Engineering*
 - Given a known advisory in the dependency graph, When `cargo-audit` runs, Then the build fails. — *Owner: Engineering*
