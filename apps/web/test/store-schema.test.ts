@@ -85,3 +85,34 @@ test("measure_version row keys by core_version", () => {
   assert.equal(row.core_version, "0.1.0");
   assert.equal(row.notes, null);
 });
+
+test("the stability channel is a windowed resonance steadiness", () => {
+  const frames = Array.from({ length: 12 }, (_, i) =>
+    frame({ t_ms: i * 10, scale_semitones: i % 2 === 0 ? -1 : 1 }),
+  );
+  const rows = metricSeriesRows({ utteranceId: "u1", frames });
+  const stability = rows.filter((r) => r.channel === "stability");
+
+  assert.ok(stability.length > 0, "stability rows are produced once the window fills");
+  assert.ok(stability.every((r) => r.value >= 0 && Number.isFinite(r.value)), "a standard deviation");
+  assert.ok(stability.every((r) => Number.isFinite(r.confidence)));
+  assert.ok(stability[0].t_ms >= 90, "no row before the window is full");
+});
+
+test("a steady resonance reads near zero stability; a moving one does not", () => {
+  const steady = Array.from({ length: 12 }, (_, i) => frame({ t_ms: i * 10, scale_semitones: 0 }));
+  const moving = Array.from({ length: 12 }, (_, i) =>
+    frame({ t_ms: i * 10, scale_semitones: i % 2 === 0 ? -2 : 2 }),
+  );
+  const stabilityOf = (frames) =>
+    metricSeriesRows({ utteranceId: "u1", frames }).find((r) => r.channel === "stability")?.value ?? -1;
+
+  assert.equal(stabilityOf(steady), 0);
+  assert.ok(stabilityOf(moving) > 1, "alternating ±2 semitones is clearly unsteady");
+});
+
+test("no stability rows without a measurable formant scale", () => {
+  const frames = Array.from({ length: 12 }, (_, i) => frame({ t_ms: i * 10, formants: [] }));
+  const rows = metricSeriesRows({ utteranceId: "u1", frames });
+  assert.ok(!rows.some((r) => r.channel === "stability"));
+});

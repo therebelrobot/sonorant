@@ -103,4 +103,5 @@ test("trendPoints places points at wall-clock time with the session's core_versi
 test("channel labels name the measure in text", () => {
   assert.equal(channelLabel("scale"), "Resonance (semitones)");
   assert.equal(channelLabel("f0"), "Pitch (Hz)");
+  assert.equal(channelLabel("stability"), "Resonance stability (semitones)");
 });

@@ -19,9 +19,19 @@ export const STORES = [
   "measure_version",
 ];
 
-/** Metric channels (TDD §7.1). `spl` is written only when calibrated; `stability`
- * is not yet produced (no defined measure) and is omitted rather than faked. */
+/** Metric channels (TDD §7.1). `spl` is written only when calibrated. */
 export const METRIC_CHANNELS = ["f0", "scale", "hnr", "cpp", "spl"];
+
+/**
+ * `stability` (TDD §7.1) — **definition proposed, needs confirmation.** The
+ * resonance *steadiness* over a short window: the rolling standard deviation of
+ * `scale_semitones`, in semitones. Lower is steadier. It is the companion to
+ * `scale` in a trend: `scale` shows where the resonance is, `stability` shows
+ * whether it is holding.
+ */
+export const STABILITY_CHANNEL = "stability";
+/** Frames in the rolling window (≈ a tenth of a second at the default hop). */
+export const STABILITY_WINDOW = 10;
 
 /** How often a `metric_series` point is kept — downsampled for trend charts. */
 export const SERIES_SAMPLE_MS = 100;
@@ -146,6 +156,52 @@ export function metricSeriesRows({
       });
       nextAt = frame.t_ms + sampleMs;
     }
+  }
+  rows.push(...stabilityRows({ utteranceId, frames, sampleMs }));
+  return rows;
+}
+
+/**
+ * The `stability` series: the rolling standard deviation of `scale_semitones`
+ * over `window` frames, downsampled like the other channels. Only frames with a
+ * measurable formant scale contribute.
+ */
+export function stabilityRows({
+  utteranceId,
+  frames,
+  sampleMs = SERIES_SAMPLE_MS,
+  window = STABILITY_WINDOW,
+}: {
+  utteranceId: string;
+  frames: Array<{ t_ms: number; scale_semitones: number; formants?: Array<{ hz: number }> }>;
+  sampleMs?: number;
+  window?: number;
+}) {
+  const rows: Array<{
+    utterance_id: string;
+    channel: string;
+    t_ms: number;
+    value: number;
+    confidence: number;
+  }> = [];
+  const values: number[] = [];
+  let nextAt = -Infinity;
+
+  for (const frame of frames) {
+    if (frame.formants?.some((f) => f.hz > 0)) values.push(frame.scale_semitones);
+    if (values.length > window) values.shift();
+    if (values.length < window || frame.t_ms < nextAt) continue;
+
+    const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+    const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+    rows.push({
+      utterance_id: utteranceId,
+      channel: STABILITY_CHANNEL,
+      t_ms: Math.round(frame.t_ms),
+      value: Math.sqrt(variance),
+      confidence: meanFormantConfidence(frame),
+    });
+    nextAt = frame.t_ms + sampleMs;
   }
   return rows;
 }

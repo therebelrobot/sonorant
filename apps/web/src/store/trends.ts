@@ -18,6 +18,7 @@ export const CHANNEL_LABELS = {
   hnr: "HNR (dB)",
   cpp: "CPP",
   spl: "Sound level (dB SPL)",
+  stability: "Resonance stability (semitones)",
 };
 
 export function channelLabel(channel) {

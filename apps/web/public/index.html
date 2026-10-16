@@ -83,6 +83,13 @@
 
           <div id="trend">
             <h4 id="trend-heading">Trend</h4>
+            <p>
+              <label for="trend-channel">Measure</label>
+              <select id="trend-channel">
+                <option value="scale">Resonance (semitones)</option>
+                <option value="stability">Resonance stability (semitones)</option>
+              </select>
+            </p>
             <button id="trend-open" type="button">Show trend</button>
             <canvas
               id="trend-canvas"

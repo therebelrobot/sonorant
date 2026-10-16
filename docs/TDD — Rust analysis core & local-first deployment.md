@@ -434,6 +434,13 @@ CREATE TABLE measure_version (     -- one row per core version that produced sto
 );
 ```
 
+**Metric channels.** Each `metric_series.channel` is either a per-frame field of §4.1 (`f0`,
+`scale`, `hnr`, `cpp`, and `spl` when a calibration is attached) or a derived series. `stability`
+is derived: the rolling standard deviation of `scale_semitones` over a short window (ten frames at
+the default hop), in semitones, written only for frames with a measurable formant scale. Lower is
+steadier. — *Definition recorded 2026-10-16 when the channel was first produced; the measure is
+proposed and open to revision.*
+
 ### 7.2 Migrations and rollback
 
 - **Forward-only, expand/contract**, on both the local store and the archive container.

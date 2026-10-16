@@ -199,9 +199,10 @@ async function compareLatest() {
 /** Render the trend sparkline and its accessible text (S5.4). */
 async function showTrend() {
   try {
+    const channel = el("trend-channel").value || "scale";
     const { sessions, utterances, series } = await loadHistory();
-    const points = trendPoints(sessions, utterances, series, "scale");
-    const model = buildTrendSeries({ channel: "scale", points });
+    const points = trendPoints(sessions, utterances, series, channel);
+    const model = buildTrendSeries({ channel, points });
     const alt = trendTextAlternative(model);
     if (!trendView) trendView = new TrendView(el("trend-canvas"));
     trendView.setSeries(model);
@@ -377,6 +378,9 @@ el("compare").addEventListener("click", () => {
   if (isEnabled("enable-history-ab")) compareLatest();
 });
 el("trend-open").addEventListener("click", () => {
+  if (isEnabled("enable-longitudinal-trends")) showTrend();
+});
+el("trend-channel").addEventListener("change", () => {
   if (isEnabled("enable-longitudinal-trends")) showTrend();
 });
 el("export-run").addEventListener("click", () => {
