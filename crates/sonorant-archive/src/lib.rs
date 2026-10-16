@@ -41,6 +41,8 @@ pub enum ArchiveError {
     WrongPassphrase,
     #[error("crypto error: {0}")]
     Crypto(String),
+    #[error("this archive was made by a newer version of the app (format v{found}); this version supports v{supported}. Update the app, then import again. Nothing was changed.")]
+    UnsupportedFormat { found: u32, supported: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -307,4 +309,145 @@ pub fn write_archive<W: Write + Seek>(
             write_container(writer, &m, payload)
         }
     }
+}
+
+// --- Import and merge (S6.3) ---------------------------------------------------
+//
+// Import merges by id and reports what it added, skipped, or conflicted on. A
+// conflict keeps the existing copy: import NEVER silently overwrites.
+
+use std::collections::HashMap;
+
+/// One stored record. `id` is the merge key; `data` is the record body.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Record {
+    pub id: String,
+    pub data: serde_json::Value,
+}
+
+/// The payload of an archive: the stored collections.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct Bundle {
+    pub sessions: Vec<Record>,
+    pub utterances: Vec<Record>,
+    pub metric_series: Vec<Record>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ImportReport {
+    pub added: usize,
+    pub skipped: usize,
+    pub conflicted: usize,
+    /// ids where the incoming record differed from the existing one
+    pub conflicts: Vec<String>,
+}
+
+impl ImportReport {
+    /// A plain-language report line (phase 6 S4.3).
+    pub fn line(&self) -> String {
+        format!(
+            "Added {} record(s), skipped {} already present, {} conflict(s) kept your existing copy.",
+            self.added, self.skipped, self.conflicted
+        )
+    }
+}
+
+pub fn bundle_json(bundle: &Bundle) -> Result<String, ArchiveError> {
+    Ok(serde_json::to_string_pretty(bundle)?)
+}
+
+fn merge_collection(
+    existing: &[Record],
+    incoming: &[Record],
+    report: &mut ImportReport,
+) -> Vec<Record> {
+    let mut index: HashMap<String, Record> =
+        existing.iter().cloned().map(|r| (r.id.clone(), r)).collect();
+    let mut added = Vec::new();
+
+    for record in incoming {
+        match index.get(&record.id) {
+            None => {
+                index.insert(record.id.clone(), record.clone());
+                added.push(record.clone());
+                report.added += 1;
+            }
+            Some(current) if current == record => report.skipped += 1,
+            Some(_) => {
+                // Keep the existing copy; report the conflict.
+                report.conflicted += 1;
+                report.conflicts.push(record.id.clone());
+            }
+        }
+    }
+
+    let mut merged = existing.to_vec();
+    merged.extend(added);
+    merged
+}
+
+/// Merge `incoming` into `existing`: by id, added / skipped / conflicted.
+pub fn merge_bundles(existing: &Bundle, incoming: &Bundle) -> (Bundle, ImportReport) {
+    let mut report = ImportReport::default();
+    let merged = Bundle {
+        sessions: merge_collection(&existing.sessions, &incoming.sessions, &mut report),
+        utterances: merge_collection(&existing.utterances, &incoming.utterances, &mut report),
+        metric_series: merge_collection(
+            &existing.metric_series,
+            &incoming.metric_series,
+            &mut report,
+        ),
+    };
+    (merged, report)
+}
+
+/// Refuse an archive this version cannot read, before touching any payload.
+pub fn ensure_supported(manifest: &Manifest) -> Result<(), ArchiveError> {
+    if manifest.format != FORMAT {
+        return Err(ArchiveError::Malformed(format!(
+            "not a {FORMAT} archive (found {:?})",
+            manifest.format
+        )));
+    }
+    if manifest.format_version > FORMAT_VERSION {
+        return Err(ArchiveError::UnsupportedFormat {
+            found: manifest.format_version,
+            supported: FORMAT_VERSION,
+        });
+    }
+    Ok(())
+}
+
+fn read_entry<R: Read + Seek>(archive: &mut ZipArchive<R>, name: &str) -> Result<Vec<u8>, ArchiveError> {
+    let mut file = archive.by_name(name)?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    Ok(bytes)
+}
+
+/// Import an archive into `existing`. Refuses a newer format, fails cleanly on a
+/// damaged file, and returns the merge report. Never mutates `existing`.
+pub fn import_archive<R: Read + Seek>(
+    reader: R,
+    passphrase: Option<&str>,
+    existing: &Bundle,
+) -> Result<(Bundle, ImportReport), ArchiveError> {
+    let mut archive = ZipArchive::new(reader)?;
+
+    let manifest_bytes = read_entry(&mut archive, MANIFEST_NAME)?;
+    let manifest: Manifest = serde_json::from_slice(&manifest_bytes)?;
+    ensure_supported(&manifest)?;
+
+    let payload = read_entry(&mut archive, payload_name(manifest.encrypted))?;
+    let payload = if manifest.encrypted {
+        let kdf = manifest
+            .kdf
+            .ok_or_else(|| ArchiveError::Malformed("encrypted archive has no kdf".to_string()))?;
+        decrypt_payload(passphrase.ok_or(ArchiveError::WrongPassphrase)?, &payload, &kdf)?
+    } else {
+        payload
+    };
+
+    let incoming: Bundle = serde_json::from_slice(&payload)?;
+    Ok(merge_bundles(existing, &incoming))
 }
