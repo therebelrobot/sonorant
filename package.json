@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "test": "turbo run test",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "check:bundle": "node scripts/egress-scan.mjs"
   },
   "license": "Unlicense",
   "type": "commonjs",

@@ -41,4 +41,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Egress origin scan + CSP check on the built bundle (S0.3, TDD §12).
+      - run: npm run check:bundle
       - run: npm run test

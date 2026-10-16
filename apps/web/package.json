@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "test": "echo \"S0.1 scaffold: no tests yet\"",
-    "build": "echo \"S0.1 scaffold: no build step yet\""
+    "build": "rm -rf dist && cp -R public dist"
   },
   "license": "Unlicense",
   "type": "commonjs",
