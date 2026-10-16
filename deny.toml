@@ -32,6 +32,35 @@ allow = [
     "MPL-2.0",
 ]
 confidence-threshold = 0.9
+# No third-party dependencies exist yet (M0), so none of the allowed licences appear
+# in the graph. Silence the "unmatched allowance" warning rather than treat the empty
+# graph as a defect; re-evaluate once M1 adds the FFT/IO crates.
+unused-allowed-license = "allow"
+
+# The project's own crates carry the project licence (Unlicense — see LICENSE and
+# README). The allowlist above constrains *third-party dependencies* (TDD §5), so the
+# workspace members are excepted here rather than widening the dependency allowlist.
+[[licenses.exceptions]]
+name = "sonorant-core"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-analysis"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-calibrate"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-archive"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-ffi"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-capture"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+name = "sonorant-cli"
+allow = ["Unlicense"]
 
 # MPL-2.0 exception register (TDD §5). MPL-2.0 is file-level copyleft:
 # acceptable only while the crate is used unmodified. If an MPL crate is
