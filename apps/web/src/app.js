@@ -15,6 +15,8 @@ import {
   toComparisonViewModel,
   toHistoryViewModel,
 } from "./store/history.js";
+import { buildTrendSeries, segmentDistribution, trendPoints, trendTextAlternative } from "./store/trends.js";
+import { TrendView } from "./pad/trend-view.js";
 import { ensureMeasureVersion, getAll, openDatabase, putRows } from "./store/indexed-db.js";
 import { isEnabled } from "./flags.js";
 import { APP_VERSION } from "./version.js";
@@ -31,6 +33,7 @@ const parse = (json) => { try { return JSON.parse(json); } catch { return null; 
 
 let pipeline = null;
 let pad = null;
+let trendView = null;
 let framesSeen = 0;
 let recording = "off";
 let dbPromise = null;
@@ -134,11 +137,12 @@ async function persistSession() {
 
 async function loadHistory() {
   const database = await db();
-  const [sessions, utterances] = await Promise.all([
+  const [sessions, utterances, series] = await Promise.all([
     getAll(database, "session"),
     getAll(database, "utterance"),
+    getAll(database, "metric_series"),
   ]);
-  return { rows: toHistoryViewModel(sessions, utterances), utterances };
+  return { rows: toHistoryViewModel(sessions, utterances), sessions, utterances, series };
 }
 
 async function refreshHistory() {
@@ -187,6 +191,33 @@ async function compareLatest() {
     view.hidden = false;
   } catch {
     caveat.textContent = HISTORY_COPY.loadError.body;
+  }
+}
+
+/** Render the trend sparkline and its accessible text (S5.4). */
+async function showTrend() {
+  try {
+    const { sessions, utterances, series } = await loadHistory();
+    const points = trendPoints(sessions, utterances, series, "scale");
+    const model = buildTrendSeries({ channel: "scale", points });
+    const alt = trendTextAlternative(model);
+    if (!trendView) trendView = new TrendView(el("trend-canvas"));
+    trendView.setSeries(model);
+    el("trend-text").textContent = alt.summary;
+    el("trend-boundary").textContent = alt.boundaryNote ?? "";
+    el("trend-stopped").textContent = alt.stoppedNote ?? "";
+
+    const distributions = model.segments
+      .map((segment) => {
+        const d = segmentDistribution(segment.points);
+        return d ? `${segment.coreVersion}: p50 ${d.p50.toFixed(1)} (n=${segment.points.length})` : null;
+      })
+      .filter(Boolean);
+    el("trend-distribution").textContent = distributions.length
+      ? `Distribution — ${distributions.join("; ")}.`
+      : "";
+  } catch {
+    el("trend-text").textContent = HISTORY_COPY.loadError.body;
   }
 }
 
@@ -257,6 +288,9 @@ el("finish").addEventListener("click", async () => {
 el("history-open").addEventListener("click", refreshHistory);
 el("compare").addEventListener("click", () => {
   if (isEnabled("enable-history-ab")) compareLatest();
+});
+el("trend-open").addEventListener("click", () => {
+  if (isEnabled("enable-longitudinal-trends")) showTrend();
 });
 window.addEventListener("pagehide", () => {
   pipeline?.stop();
