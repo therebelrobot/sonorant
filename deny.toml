@@ -1,0 +1,54 @@
+# cargo-deny configuration.
+#
+# Authority: TDD §5 (dependency register, licence policy) and §12 (supply chain).
+# The gate is mechanical by design — this project has no legal department, so a
+# disallowed or unverified licence fails the build, not the review.
+
+[graph]
+# The targets the core is compiled for (TDD §1), plus the host default.
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "aarch64-unknown-linux-gnu" },
+    { triple = "wasm32-unknown-unknown" },
+    { triple = "aarch64-apple-darwin" },
+    { triple = "x86_64-apple-darwin" },
+]
+
+[advisories]
+version = 2
+# A known advisory in the dependency graph fails the build (TDD §5).
+ignore = []
+
+[licenses]
+version = 2
+# Allowlist, exactly as TDD §5 states it: MIT / Apache-2.0 / BSD-3-Clause /
+# ISC / MPL-2.0. A licence outside this set is a failure to be decided by a
+# human, not silently widened here.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "ISC",
+    "MPL-2.0",
+]
+confidence-threshold = 0.9
+
+# MPL-2.0 exception register (TDD §5). MPL-2.0 is file-level copyleft:
+# acceptable only while the crate is used unmodified. If an MPL crate is
+# patched, the changed logic must be rewritten in-house or the patch dropped,
+# and this register updated in the same commit.
+#
+#   - `symphonia` (audio decode, import path) — MPL-2.0. Verify unmodified at
+#     the commit where it is first added; see docs/dependency-licences.md.
+#
+# CI enforces the allowlist but cannot see intent, so an intentional MPL
+# exception must be recorded here as well.
+
+[sources]
+# Everything resolves from crates.io (TDD §5, §12). No git dependencies and no
+# alternate registries, so the supply chain stays auditable and builds
+# reproducible.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

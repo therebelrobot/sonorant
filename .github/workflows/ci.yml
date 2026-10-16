@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and test
+        run: |
+          cargo build --workspace --locked
+          cargo test --workspace --locked
+      # Licence and advisory gate (S0.2, TDD §5). Reads deny.toml at the repo root.
+      - name: Licence and advisory gate
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+      # Advisory database check against Cargo.lock (S0.2, TDD §5).
+      - name: Advisory audit
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  node:
+    name: Node
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test
