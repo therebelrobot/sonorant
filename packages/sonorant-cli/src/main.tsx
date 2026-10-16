@@ -9,10 +9,9 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
 import { render } from "ink";
-import React, { createElement as h } from "react";
 
 import { analyse } from "./analyse.ts";
-import { ResultView } from "./app.ts";
+import { ResultView } from "./app.tsx";
 import { CliError, UNSUPPORTED, UsageError, inputError, mapError } from "./errors.ts";
 import { countFrames, runNativeFile } from "./native.ts";
 import { summarize } from "./summary.ts";
@@ -64,7 +63,7 @@ async function analyseCommand(args, io, deps) {
   }
 
   const { status, lines } = summarize(frames);
-  render(h(ResultView, { status, lines }));
+  render(<ResultView status={status} lines={lines} />);
 }
 
 async function batchCommand(args, io, deps) {
@@ -86,10 +85,6 @@ async function batchCommand(args, io, deps) {
   }
 }
 
-/**
- * @param {string[]} argv
- * @param {{ io?: object, readFile?: Function, analyse?: Function, runNative?: Function }} [deps]
- */
 export async function main(
   argv: string[],
   deps: {
