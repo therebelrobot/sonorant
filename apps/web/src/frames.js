@@ -10,6 +10,9 @@ const MAX_FORMANTS = 5;
  */
 export function decodeFrames(words) {
   const frames = [];
+  // `t_ms` is a u32 in the struct; reading it as an f32 word yields its bit
+  // pattern, not a value. Reinterpret word 0 as u32.
+  const u32 = new Uint32Array(words.buffer, words.byteOffset, words.length);
   for (let i = 0; i + FRAME_WORDS <= words.length; i += FRAME_WORDS) {
     const formants = [];
     for (let f = 0; f < MAX_FORMANTS; f++) {
@@ -21,7 +24,7 @@ export function decodeFrames(words) {
       });
     }
     frames.push({
-      t_ms: words[i],
+      t_ms: u32[i],
       f0_hz: words[i + 1],
       voicing: words[i + 2],
       f0_confidence: words[i + 3],

@@ -65,6 +65,22 @@
           <p id="summary-caveat" role="status" aria-live="polite"></p>
           <ul id="summary-lines"></ul>
         </section>
+
+        <section id="history" aria-labelledby="history-heading">
+          <h3 id="history-heading">History</h3>
+          <p id="history-status" role="status" aria-live="polite"></p>
+          <button id="finish" type="button">Finish session</button>
+          <button id="history-open" type="button">Open history</button>
+          <ul id="history-list"></ul>
+          <button id="compare" type="button">Compare the two most recent</button>
+          <div id="compare-view" hidden>
+            <h4 id="compare-heading"></h4>
+            <p id="compare-labels"></p>
+            <ul id="compare-lines"></ul>
+            <p id="compare-caveats" role="status" aria-live="polite"></p>
+            <p id="compare-normative"></p>
+          </div>
+        </section>
       </section>
     </main>
     <script type="module" src="./app.js"></script>

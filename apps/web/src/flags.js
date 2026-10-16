@@ -6,6 +6,7 @@
 
 const DEFAULTS = {
   "enable-local-history": false,
+  "enable-history-ab": false,
 };
 
 /** True when `key` is enabled. Overridable via `scope.__SONORANT_FLAGS__[key]`. */

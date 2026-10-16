@@ -3,7 +3,7 @@
 // Capture happens in the audio callback; analysis and recording happen on the
 // Worker. This module only wires the two together and detects SharedArrayBuffer.
 
-import { ERROR, FRAMES, PCM, RECORD_START, RECORD_STOP, RECORDING } from "./protocol.js";
+import { ERROR, FRAMES, PCM, RECORD_START, RECORD_STOP, RECORDING, VERSIONS } from "./protocol.js";
 import { sharedArrayBufferSupported } from "./shared-array-buffer.js";
 
 export const WORKLET_URL = "worklet/capture-processor.js";
@@ -15,11 +15,14 @@ export const WORKER_URL = "worker.js";
  */
 export async function startCapture(
   stream,
-  { onFrames, onRecording, onError } = {},
+  { onFrames, onRecording, onVersions, onError, context: providedContext } = {},
   scope = globalThis,
 ) {
   const AudioContextCtor = scope.AudioContext ?? scope.webkitAudioContext;
-  const context = new AudioContextCtor();
+  // Prefer a context the caller created inside the user gesture; an AudioContext
+  // created after an await starts suspended and its worklet never runs.
+  const context = providedContext ?? new AudioContextCtor();
+  if (context.state === "suspended") await context.resume();
   await context.audioWorklet.addModule(new URL(WORKLET_URL, import.meta.url));
 
   const source = context.createMediaStreamSource(stream);
@@ -30,6 +33,7 @@ export async function startCapture(
     const data = event.data;
     if (data && data.type === FRAMES) onFrames?.(data.frames, data.count);
     else if (data && data.type === RECORDING) onRecording?.(data.state, data.detail);
+    else if (data && data.type === VERSIONS) onVersions?.(data);
     else if (data && data.type === ERROR) onError?.(data.message);
   });
 
@@ -43,8 +47,13 @@ export async function startCapture(
     }
   };
 
-  // Analysis only: do NOT connect the node to the destination (no playback).
+  // Analysis only: route through a muted gain node so the audio graph pulls the
+  // worklet (a node not connected onward is never processed) without playing it.
+  const mute = context.createGain();
+  mute.gain.value = 0;
   source.connect(node);
+  node.connect(mute);
+  mute.connect(context.destination);
 
   return {
     sampleRate: context.sampleRate,

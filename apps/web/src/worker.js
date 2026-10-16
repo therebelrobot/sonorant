@@ -14,11 +14,13 @@ import {
   RECORDING,
   RECORD_START,
   RECORD_STOP,
+  VERSIONS,
 } from "./protocol.js";
 
 let engine = null;
 let sampleRate = 44100;
 let recorder = null;
+let announcedVersions = false;
 
 function recorderFor(rate) {
   if (!recorder) {
@@ -58,6 +60,18 @@ self.addEventListener("message", async (event) => {
 
   try {
     await ensureEngine(data.sampleRate ?? sampleRate);
+    if (!announcedVersions) {
+      announcedVersions = true;
+      try {
+        self.postMessage({
+          type: VERSIONS,
+          coreVersion: engine.core_version(),
+          abiVersion: engine.abi_version(),
+        });
+      } catch {
+        // Versions are informational; never let them stop analysis.
+      }
+    }
     // Recording is off by default: this is a no-op unless the member turned it on.
     if (recorder) await recorder.push(data.samples);
 
