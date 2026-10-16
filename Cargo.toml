@@ -1,0 +1,18 @@
+# Cargo workspace root (TDD §3). The seven Rust crates in the monorepo.
+[workspace]
+resolver = "2"
+members = [
+    "crates/sonorant-core",
+    "crates/sonorant-analysis",
+    "crates/sonorant-calibrate",
+    "crates/sonorant-archive",
+    "crates/sonorant-ffi",
+    "crates/sonorant-capture",
+    "crates/sonorant-cli",
+]
+
+# Shared across every crate so CORE_VERSION stays aligned (TDD §9, §15).
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Unlicense"
