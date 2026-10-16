@@ -672,7 +672,8 @@ left as an intention.
 2. Specific microphone and calibrator — separate equipment research pass with cited sources.
 3. Phoneme classifier for per-vowel analysis: build in Rust, vendor, or defer past v1.
 4. Whether the desktop shell ships in v1. If yes, `sonorant-capture` and the calibration flow move into
-   the critical path rather than staying deferred.
+   the critical path rather than staying deferred. **Decided 2026-10-16: deferred for v1** (issue #2);
+   SPL stays unreachable in v1 and the calibration flow stays parked (issue #1).
 5. Argon2id parameters for the archive KDF — needs a decision against an explicit device-class
    time budget, since a phone must be able to open its own archive in reasonable time.
 6. Whether the local store should be SQLite (via a WASM build) rather than IndexedDB. Deferred

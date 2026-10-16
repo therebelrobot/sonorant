@@ -72,6 +72,9 @@ batch path need (TDD §1, §17). The milestones below follow that ordering.
 §12.2). If it does not ship, M9 is deferred and `sonorant-capture` and the calibration flow stay
 off the critical path. See §6.
 
+**Decided 2026-10-16:** M9 is **deferred for v1**. `sonorant-capture` and the calibration flow stay off
+the critical path, and SPL is unreachable in v1. Tracked as issue #2.
+
 ---
 
 ## 2. Stories
@@ -757,7 +760,7 @@ names the story it gates.
 | **`AnalysisFrame` wire-layout arithmetic discrepancy.** TDD §4.4 states 25 `f32` + 1 `u32` = 26 words; the field list in TDD §4.1 sums to 28 `f32` plus `u32` and `u16`. The exact stride must be confirmed before the ABI test is written, because the wire layout is a one-way contract. | TDD §4.1, §4.4; phase 5 §3.7, §6.2 | **S3.2** (ABI test) |
 | **`AnalysisSummary` structure — proposed, needs confirmation.** The TDD references it as the content of `utterance.metrics_json` but does not define it. | TDD §7.1; phase 5 §3.4, §6.1 | **S5.1**, **S5.3** |
 | **Argon2id parameters for the archive KDF.** `m`, `t`, `p` need a decision against an explicit device-class time budget, since a phone must open its own archive in reasonable time. | TDD §8, §16.5; phase 5 §6.4 | **S6.2** |
-| **Whether the desktop shell ships in v1.** If yes, `sonorant-capture` and the calibration flow move into the critical path rather than staying deferred. | TDD §16.4; brief §12.2; phase 5 §6.8 | **M9** (S9.1, S9.2, S9.3) |
+| **Whether the desktop shell ships in v1.** **Decided 2026-10-16: deferred for v1** (issue #2). `sonorant-capture` and the calibration flow stay off the critical path, and SPL is unreachable in v1. | TDD §16.4; brief §12.2; phase 5 §6.8 | **M9** (S9.1, S9.2, S9.3) — deferred |
 | **JSON representation of `spl_db` `NaN`.** JSON has no `NaN` literal; the phase-5 schema uses `null`, and the convention must be consistent between the archive and the local rows. | TDD §4.2, §7.1, §8; phase 5 §6.3 | **S5.1**, **S6.1** |
 | **Unverified dependency licences.** `pitch-detection`, `pyin-rs`, `hound`, `symphonia`, `zip`, and both prior-art voice crates must be verified before any becomes a dependency. `symphonia` is MPL-2.0 and needs an explicit exception comment if used unmodified. | TDD §5, §16.1; phase 5 §6.6 | **S0.2**, **S1.1**, **S6.1** |
 | **SQLite versus IndexedDB for the local store.** Deferred; the schema is the contract, not the engine, so it can be adopted behind the storage layer without changing the archive format. | TDD §7, §16.6; phase 5 §6.5 | **S5.1** |
