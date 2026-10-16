@@ -47,13 +47,8 @@ export async function startCapture(
     }
   };
 
-  // Analysis only: route through a muted gain node so the audio graph pulls the
-  // worklet (a node not connected onward is never processed) without playing it.
-  const mute = context.createGain();
-  mute.gain.value = 0;
+  // Analysis only: do NOT connect the node to the destination (no playback).
   source.connect(node);
-  node.connect(mute);
-  mute.connect(context.destination);
 
   return {
     sampleRate: context.sampleRate,
