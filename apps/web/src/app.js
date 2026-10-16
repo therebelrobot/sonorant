@@ -5,6 +5,7 @@ import { COPY, isSecure, openMicrophone } from "./capture.js";
 import { FRAME_WORDS, decodeFrames } from "./frames.js";
 import { PAD_TEXT, PadView } from "./pad/pad-view.js";
 import { activeFlags, isTrustworthy } from "./pad/pad-model.js";
+import { summarize } from "./pad/summary.js";
 
 const PANELS = ["insecure", "permission", "denied", "practice", "status", "checking"];
 
@@ -34,8 +35,23 @@ function onFrames(frames, count) {
     el("pad-confidence").textContent = isTrustworthy(current)
       ? ""
       : `${PAD_TEXT.lowConfidence.heading} ${PAD_TEXT.lowConfidence.body}`;
+    renderSummary(current);
   }
   el("pad-flags").textContent = seenFlags.size ? [...seenFlags].join(", ") : "none";
+}
+
+/** Render the accessible text equivalent of the pad. */
+function renderSummary(frame) {
+  const summary = summarize(frame);
+  const list = el("summary-lines");
+  list.replaceChildren(
+    ...summary.lines.map((line) => {
+      const item = document.createElement("li");
+      item.textContent = line;
+      return item;
+    }),
+  );
+  el("summary-caveat").textContent = summary.caveat ?? "";
 }
 
 function applyCopy() {
