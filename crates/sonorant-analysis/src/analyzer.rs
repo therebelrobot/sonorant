@@ -42,6 +42,46 @@ fn has_rail_run(frame: &[f32]) -> bool {
     false
 }
 
+/// Harmonicity floor for `LOW_SNR`.
+///
+/// **Derived, not copied.** The clinical cut is 7 dB (Yumoto, Gould & Baer 1982;
+/// Boersma 1993 is the HNR method used here), but 7 dB is unreachable in this
+/// pipeline: measured on the synthetic vowel, a voiced frame bottoms out at
+/// ~8.9 dB, because a frame noisy enough to go lower is no longer detected as
+/// voiced. 10 dB is the level at which a *voiced* frame is at the edge of
+/// voicing, which is what the flag means.
+const LOW_SNR_HNR_DB: f32 = 10.0;
+
+/// Creak is a low, aperiodic pulse register (Hollien & Michel 1968; Keating,
+/// Kuang & Esposito 2012).
+///
+/// **The band is partly out of reach, and that is recorded rather than hidden.**
+/// Canonical creak is 20–60 Hz, below this pipeline's tracker floor of
+/// `pitch::DEFAULT_MIN_F0_HZ` (60 Hz, and ~43 Hz at most in a 2048-sample frame),
+/// so genuine fry reads *unvoiced* and cannot be flagged at all. What can be
+/// caught is the edge: a frame that is still voiced, low, and poorly periodic.
+/// At 68 Hz such a frame bottoms out at ~13 dB HNR, so 15 dB is the threshold
+/// here — roughly the same "how periodic" as 10 dB at 150 Hz, because a 46 ms
+/// frame holds three cycles at 68 Hz and fourteen at 150 Hz. A longer analysis
+/// window is the real fix (TDD §16.7).
+const CREAK_MAX_F0_HZ: f32 = 70.0;
+const CREAK_MAX_HNR_DB: f32 = 15.0;
+
+/// `LOW_SNR`: a **voiced** frame whose harmonicity is too low to trust. An
+/// unvoiced frame has no harmonicity to judge (HNR is `NaN`), so it is not
+/// flagged — "unvoiced" is already its own answer.
+fn is_low_snr(pitch_est: &pitch::Pitch, hnr_db: f32) -> bool {
+    pitch_est.f0_hz > 0.0 && hnr_db.is_finite() && hnr_db < LOW_SNR_HNR_DB
+}
+
+/// `CREAK`: voiced, in the pulse register, and aperiodic.
+fn is_creak(pitch_est: &pitch::Pitch, hnr_db: f32) -> bool {
+    pitch_est.f0_hz > 0.0
+        && pitch_est.f0_hz <= CREAK_MAX_F0_HZ
+        && hnr_db.is_finite()
+        && hnr_db < CREAK_MAX_HNR_DB
+}
+
 /// The shared contract every surface drives (TDD §4.1). No acoustic maths in any
 /// caller; the maths lives in `sonorant-core`.
 pub trait Analyzer {
@@ -105,15 +145,11 @@ impl FrameAnalyzer {
             p.voicing_threshold,
         );
         let cpp = cepstrum::cpp(&cepstrum::real_cepstrum(&framed), sr);
+        let hnr_db = features::hnr_db(frame, sr, pitch_est.f0_hz);
 
         let mut slot = [Formant::default(); MAX_FORMANTS];
         for (i, f) in found.iter().take(MAX_FORMANTS).enumerate() {
             slot[i] = *f;
-        }
-
-        let mut fl = flags::UNCALIBRATED;
-        if has_rail_run(frame) {
-            fl += flags::CLIPPED;
         }
 
         // Voiced-cycle perturbation (TDD §4.1). `NaN` when the frame is unvoiced
@@ -121,13 +157,27 @@ impl FrameAnalyzer {
         let (jitter_local, shimmer_local) =
             perturbation::jitter_shimmer(frame, sr, pitch_est.f0_hz);
 
+        let mut fl = flags::UNCALIBRATED;
+        if has_rail_run(frame) {
+            fl += flags::CLIPPED;
+        }
+        if pitch_est.subharmonic {
+            fl += flags::SUBHARMONIC;
+        }
+        if is_low_snr(&pitch_est, hnr_db) {
+            fl += flags::LOW_SNR;
+        }
+        if is_creak(&pitch_est, hnr_db) {
+            fl += flags::CREAK;
+        }
+
         AnalysisFrame {
             t_ms,
             f0_hz: pitch_est.f0_hz,
             voicing: pitch_est.confidence,
             f0_confidence: pitch_est.confidence,
             formants: slot,
-            hnr_db: features::hnr_db(frame, sr, pitch_est.f0_hz),
+            hnr_db,
             cpp_db: cpp,
             tilt_db_per_oct: features::spectral_tilt_db_per_oct(&magnitude, sr),
             h1_h2_db: features::h1_h2_db(&magnitude, sr, pitch_est.f0_hz),

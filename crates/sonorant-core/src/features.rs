@@ -96,7 +96,11 @@ pub fn h1_h2_db(magnitude: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
     let floor = 1e-9f32;
     let amp_db = |freq: f32| -> Option<f32> {
         let k = (freq / bin_hz).round() as usize;
-        magnitude.get(k).copied().filter(|m| *m > floor).map(|m| 20.0 * m.log10())
+        magnitude
+            .get(k)
+            .copied()
+            .filter(|m| *m > floor)
+            .map(|m| 20.0 * m.log10())
     };
     match (amp_db(f0_hz), amp_db(2.0 * f0_hz)) {
         (Some(h1), Some(h2)) => h1 - h2,
@@ -104,8 +108,17 @@ pub fn h1_h2_db(magnitude: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
     }
 }
 
-/// Harmonics-to-noise ratio in dB, from the normalized autocorrelation at the
-/// pitch period (Boersma's method). `NaN` for an unvoiced frame.
+/// Harmonics-to-noise ratio in dB (Boersma's method): the normalised
+/// autocorrelation coefficient at the pitch period, `10·log10(r/(1−r))`.
+///
+/// The coefficient is computed over the **lagged overlap** only. Dividing the
+/// lagged numerator by the *whole frame's* energy instead carries a bias of
+/// roughly `lag / frame_len`, which grows as f0 falls — so a low voice reads as a
+/// noisy one. That is a wrong number, not a conservative one.
+///
+/// `NaN` for an unvoiced frame (`f0_hz <= 0`) or one with no usable energy. A
+/// perfectly periodic frame is a large *finite* ratio (the coefficient is capped
+/// just below 1), not an infinite one.
 pub fn hnr_db(frame: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
     if frame.is_empty() || sample_rate <= 0.0 || f0_hz <= 0.0 {
         return f32::NAN;
@@ -114,17 +127,29 @@ pub fn hnr_db(frame: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
     if lag == 0 || lag >= frame.len() {
         return f32::NAN;
     }
-    let r0: f32 = frame.iter().map(|x| x * x).sum();
-    if r0 <= 0.0 {
-        return f32::NAN;
-    }
-    let mut r_lag = 0.0f32;
+
+    let (mut num, mut now_energy, mut lagged_energy) = (0.0f32, 0.0f32, 0.0f32);
     for i in lag..frame.len() {
-        r_lag += frame[i] * frame[i - lag];
+        let now = frame[i];
+        let lagged = frame[i - lag];
+        num += now * lagged;
+        now_energy += now * now;
+        lagged_energy += lagged * lagged;
     }
-    let r = r_lag / r0;
-    if r <= 0.0 || r >= 1.0 {
+    let denominator = (now_energy * lagged_energy).sqrt();
+    if !(denominator > 0.0) {
         return f32::NAN;
     }
-    10.0 * (r / (1.0 - r)).log10()
+
+    let r = num / denominator;
+    if !r.is_finite() || r <= 0.0 {
+        return f32::NAN;
+    }
+    let r = r.min(1.0 - 1e-6);
+    let hnr = 10.0 * (r / (1.0 - r)).log10();
+    if hnr.is_finite() {
+        hnr
+    } else {
+        f32::NAN
+    }
 }

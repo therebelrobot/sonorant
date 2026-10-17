@@ -203,13 +203,16 @@ pub mod flags {
     /// The input overloaded: a run of consecutive samples at the digital rail.
     /// A single sample touching full scale is a *peak*, not a clip.
     pub const CLIPPED: f32          = 1.0;
-    /// The frame's harmonicity is below the low-signal floor. **Not produced yet**
-    /// (§16.7) — the bit is reserved and the floor is undecided.
+    /// A voiced frame at the edge of voicing: `hnr_db < 10`. The clinical 7 dB
+    /// cut is unreachable in this pipeline — a frame noisy enough to reach it is
+    /// no longer detected as voiced — so the floor is derived, not copied (§4.2).
     pub const LOW_SNR: f32          = 2.0;
-    /// Creaky phonation. **Not produced yet** (§16.7) — needs a definition.
+    /// A low, barely periodic frame: `f0_hz <= 70` and `hnr_db < 15`. Canonical
+    /// creak (20–60 Hz) sits below the tracker floor and reads unvoiced, so this
+    /// catches the edge only; a longer analysis window is the real fix (§16.7).
     pub const CREAK: f32            = 4.0;
-    /// The pitch estimate may be a sub-multiple of the true f0. **Not produced yet**
-    /// (§16.7) — needs a tracker-confidence margin.
+    /// The pitch estimate may be a sub-multiple of the true f0: the lag at twice
+    /// the chosen period is decisively more periodic than the chosen one.
     pub const SUBHARMONIC: f32      = 8.0;
     /// The frame has formants, but their mean confidence is below 0.25.
     pub const FORMANT_UNSTABLE: f32 = 16.0;
@@ -703,19 +706,16 @@ left as an intention.
    time budget, since a phone must be able to open its own archive in reasonable time.
 6. Whether the local store should be SQLite (via a WASM build) rather than IndexedDB. Deferred
    because IndexedDB handles the current row shapes and avoids a second storage engine.
-7. **Three frame flags are reserved and not produced** (TDD §4.1): `LOW_SNR`, `CREAK`,
-   `SUBHARMONIC`. The bits are in the published layout, so removing them is a one-way door; leaving
-   them set-never is a contract that lies. Each needs one threshold decision before it can be
-   implemented, and a flag that fires wrongly is worse than one that never fires:
-   - `LOW_SNR` — a per-frame harmonicity floor. Recommendation: `hnr_db < 7` (the level at which a
-     frame reads as breathy rather than voiced). The measure already exists.
-   - `SUBHARMONIC` — a tracker margin. Recommendation: raise it when the normalised difference at
-     `2·T₀` is within ~0.05 of the value at `T₀`, i.e. the two-period lag is nearly as periodic as
-     the one-period lag. Derived from the YIN cumulative difference the tracker already computes.
-   - `CREAK` — the hard one, and identity-adjacent: creak is a perceptual category, not a single
-     number, and mislabelling a raised-pitch voice as creaky is misleading. Recommendation: do not
-     invent it — pick a published measure (H1–H2, HNR, or jitter) with a citation, or leave the bit
-     reserved and document it as such.
+7. **Per-frame measures below ~86 Hz.** The perturbation measures need
+   `perturbation::MIN_PERIODS` (4) cycles and HNR needs several, so at the default 2048-sample
+   frame and 44.1 kHz the floor is near 86 Hz; the tracker's own floor is 60 Hz
+   (`DEFAULT_MIN_F0_HZ`, and ~43 Hz at most inside one frame). The consequences are recorded
+   rather than hidden: `jitter_local` and `shimmer_local` are `NaN` below the floor, and `CREAK`
+   catches only the edge of the pulse register, because canonical creak (20–60 Hz) reads
+   unvoiced. **The fix is a longer analysis window** — a second, long-window pass for the
+   low-frequency measures — which is a change to the §4.1 contract and therefore needs a
+   decision. The `LOW_SNR` (10 dB) and `CREAK` (15 dB) thresholds are derived from where this
+   pipeline's voicing gate actually sits and move with it; they are not clinical cuts.
 
 ---
 

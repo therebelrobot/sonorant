@@ -254,3 +254,26 @@ fn perturbation_is_small_on_the_clean_synthetic_vowel() {
         "a synthetic vowel has a constant period, got jitter {jitter}"
     );
 }
+
+#[test]
+fn hnr_is_not_biased_by_the_pitch_period() {
+    // Regression: the estimator divided the lagged numerator by the *whole*
+    // frame's energy, a bias of roughly lag/frame_len. A clean 68 Hz pulse train
+    // then read 3.0 dB — "noisy" — purely because its period is long, so a low
+    // voice was reported as a rough one.
+    let signal = synthetic::perturbed_pulse_train(&[650], &[1.0], SR, 0.5);
+    let frame = &signal[4000..4000 + FRAME];
+    let p = pitch::yin(
+        frame,
+        SR,
+        pitch::DEFAULT_MIN_F0_HZ,
+        pitch::DEFAULT_MAX_F0_HZ,
+        pitch::DEFAULT_THRESHOLD,
+    );
+    assert!(p.f0_hz > 0.0, "the 68 Hz train should be voiced");
+    let hnr = features::hnr_db(frame, SR, p.f0_hz);
+    assert!(
+        hnr > 40.0,
+        "a clean low pulse train is periodic, not noisy; got {hnr} dB"
+    );
+}

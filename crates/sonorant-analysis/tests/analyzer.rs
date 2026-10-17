@@ -144,3 +144,125 @@ fn a_peak_at_full_scale_is_not_a_clip_but_a_rail_run_is() {
         "two samples at the rail is not yet a flat top"
     );
 }
+
+/// Deterministic noise, so the flag tests are reproducible.
+struct Lcg(u64);
+impl Lcg {
+    fn next_f32(&mut self) -> f32 {
+        self.0 = self
+            .0
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        ((self.0 >> 33) as f32 / u32::MAX as f32) * 2.0 - 1.0
+    }
+}
+
+fn analyze(signal: &[f32]) -> Vec<AnalysisFrame> {
+    let mut analyzer = FrameAnalyzer::new(44_100);
+    analyzer.push(signal);
+    let mut out = vec![AnalysisFrame::default(); 512];
+    let mut frames = Vec::new();
+    loop {
+        let n = analyzer.drain(&mut out);
+        if n == 0 {
+            break;
+        }
+        frames.extend_from_slice(&out[..n]);
+    }
+    frames
+}
+
+fn has(frame: &AnalysisFrame, flag: f32) -> bool {
+    (frame.flags as i64) & (flag as i64) != 0
+}
+
+#[test]
+fn low_snr_marks_a_voiced_frame_at_the_edge_of_voicing() {
+    let mut signal = vowel(150.0);
+    for value in signal.iter_mut() {
+        *value *= 0.45;
+    }
+    let mut noise = Lcg(7);
+    for value in signal.iter_mut() {
+        *value += 0.22 * noise.next_f32();
+    }
+
+    let frames = analyze(&signal);
+    let flagged: Vec<&AnalysisFrame> = frames.iter().filter(|f| has(f, flags::LOW_SNR)).collect();
+    assert!(!flagged.is_empty(), "a noisy voiced frame is low signal");
+    for frame in flagged {
+        assert!(
+            frame.f0_hz > 0.0,
+            "low signal is a property of a voiced frame"
+        );
+        assert!(frame.hnr_db < 10.0);
+    }
+}
+
+#[test]
+fn a_clean_vowel_is_neither_low_signal_nor_creak() {
+    for frame in &analyze(&vowel(150.0)) {
+        assert!(
+            !has(frame, flags::LOW_SNR),
+            "clean harmonicity is {} dB",
+            frame.hnr_db
+        );
+        assert!(
+            !has(frame, flags::CREAK),
+            "150 Hz is not the pulse register"
+        );
+    }
+}
+
+#[test]
+fn creak_marks_a_low_barely_periodic_frame() {
+    let mut signal = synthetic::perturbed_pulse_train(&[650], &[1.0], 44_100.0, 0.5);
+    let mut noise = Lcg(11);
+    for value in signal.iter_mut() {
+        *value += 0.05 * noise.next_f32();
+    }
+
+    let frames = analyze(&signal);
+    let frame = frames
+        .iter()
+        .find(|f| has(f, flags::CREAK))
+        .expect("a low, barely periodic frame is creak");
+    assert!(frame.f0_hz > 0.0 && frame.f0_hz <= 70.0);
+    assert!(frame.hnr_db < 15.0);
+}
+
+#[test]
+fn a_clean_low_frame_is_not_creak() {
+    // Low but strongly periodic: a low voice, not a pulse register.
+    let signal = synthetic::perturbed_pulse_train(&[650], &[1.0], 44_100.0, 0.5);
+    for frame in &analyze(&signal) {
+        assert!(
+            !has(frame, flags::CREAK),
+            "clean low harmonicity is {} dB",
+            frame.hnr_db
+        );
+    }
+}
+
+#[test]
+fn subharmonic_marks_an_octave_high_estimate() {
+    // True period 600 samples carried by an amplitude alternation, so the tracker
+    // can lock onto the 300-sample half-period and report an octave-high f0.
+    let signal = synthetic::perturbed_pulse_train(&[300, 300], &[1.0, 0.55], 44_100.0, 0.5);
+    let frames = analyze(&signal);
+    let frame = frames
+        .iter()
+        .find(|f| has(f, flags::SUBHARMONIC))
+        .expect("an octave-high estimate is flagged");
+    assert!(frame.f0_hz > 0.0);
+}
+
+#[test]
+fn a_clean_vowel_is_not_subharmonic() {
+    for frame in &analyze(&vowel(150.0)) {
+        assert!(
+            !has(frame, flags::SUBHARMONIC),
+            "a clean periodic frame has no octave error"
+        );
+    }
+}
