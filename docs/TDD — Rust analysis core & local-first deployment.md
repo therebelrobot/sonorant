@@ -197,12 +197,23 @@ pub struct AnalysisFrame {
     pub flags: f32,
 }
 
+/// The frame flags. Set on the frame where the condition holds, and shown as text
+/// in the UI, never by colour alone.
 pub mod flags {
+    /// The input overloaded: a run of consecutive samples at the digital rail.
+    /// A single sample touching full scale is a *peak*, not a clip.
     pub const CLIPPED: f32          = 1.0;
+    /// The frame's harmonicity is below the low-signal floor. **Not produced yet**
+    /// (§16.7) — the bit is reserved and the floor is undecided.
     pub const LOW_SNR: f32          = 2.0;
+    /// Creaky phonation. **Not produced yet** (§16.7) — needs a definition.
     pub const CREAK: f32            = 4.0;
+    /// The pitch estimate may be a sub-multiple of the true f0. **Not produced yet**
+    /// (§16.7) — needs a tracker-confidence margin.
     pub const SUBHARMONIC: f32      = 8.0;
+    /// The frame has formants, but their mean confidence is below 0.25.
     pub const FORMANT_UNSTABLE: f32 = 16.0;
+    /// No calibration is attached, so `spl_db` is `NaN`.
     pub const UNCALIBRATED: f32     = 32.0;
 }
 
@@ -692,6 +703,19 @@ left as an intention.
    time budget, since a phone must be able to open its own archive in reasonable time.
 6. Whether the local store should be SQLite (via a WASM build) rather than IndexedDB. Deferred
    because IndexedDB handles the current row shapes and avoids a second storage engine.
+7. **Three frame flags are reserved and not produced** (TDD §4.1): `LOW_SNR`, `CREAK`,
+   `SUBHARMONIC`. The bits are in the published layout, so removing them is a one-way door; leaving
+   them set-never is a contract that lies. Each needs one threshold decision before it can be
+   implemented, and a flag that fires wrongly is worse than one that never fires:
+   - `LOW_SNR` — a per-frame harmonicity floor. Recommendation: `hnr_db < 7` (the level at which a
+     frame reads as breathy rather than voiced). The measure already exists.
+   - `SUBHARMONIC` — a tracker margin. Recommendation: raise it when the normalised difference at
+     `2·T₀` is within ~0.05 of the value at `T₀`, i.e. the two-period lag is nearly as periodic as
+     the one-period lag. Derived from the YIN cumulative difference the tracker already computes.
+   - `CREAK` — the hard one, and identity-adjacent: creak is a perceptual category, not a single
+     number, and mislabelling a raised-pitch voice as creaky is misleading. Recommendation: do not
+     invent it — pick a published measure (H1–H2, HNR, or jitter) with a citation, or leave the bit
+     reserved and document it as such.
 
 ---
 

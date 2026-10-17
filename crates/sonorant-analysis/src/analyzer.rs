@@ -13,6 +13,34 @@ use crate::frame::{flags, AnalysisFrame, AnalysisParams};
 const STABILITY_TOLERANCE: f32 = 0.10;
 /// Mean formant confidence below which `FORMANT_UNSTABLE` is raised.
 const UNSTABLE_MEAN_CONFIDENCE: f32 = 0.25;
+/// Within this of full scale counts as the digital rail.
+const RAIL_EPSILON: f32 = 1e-6;
+/// Consecutive samples at the rail required to call it an overload.
+const RAIL_RUN: usize = 3;
+
+/// `CLIPPED` means the input *overloaded*: the waveform was held at the digital
+/// rail, so its shape there is gone and level and perturbation on this frame are
+/// not trustworthy.
+///
+/// A single sample that touches full scale is a **peak**, not an overload — every
+/// recording normalised to peak amplitude is exactly that case, including this
+/// project's own reference fixture. Requiring a run distinguishes the two: an
+/// overload produces consecutive samples pinned at the rail, a smooth peak does
+/// not.
+fn has_rail_run(frame: &[f32]) -> bool {
+    let mut run = 0usize;
+    for value in frame {
+        if value.abs() >= 1.0 - RAIL_EPSILON {
+            run += 1;
+            if run >= RAIL_RUN {
+                return true;
+            }
+        } else {
+            run = 0;
+        }
+    }
+    false
+}
 
 /// The shared contract every surface drives (TDD §4.1). No acoustic maths in any
 /// caller; the maths lives in `sonorant-core`.
@@ -83,9 +111,8 @@ impl FrameAnalyzer {
             slot[i] = *f;
         }
 
-        let peak = frame.iter().fold(0.0f32, |m, x| m.max(x.abs()));
         let mut fl = flags::UNCALIBRATED;
-        if peak >= 0.999 {
+        if has_rail_run(frame) {
             fl += flags::CLIPPED;
         }
 

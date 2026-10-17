@@ -54,7 +54,11 @@ fn reset_clears_state() {
 
     let mut out = vec![AnalysisFrame::default(); 16];
     assert_eq!(a.drain(&mut out), 0, "reset must clear pending frames");
-    assert_eq!(a.push(&vec![0.0f32; 100]), 0, "sub-frame push yields nothing");
+    assert_eq!(
+        a.push(&vec![0.0f32; 100]),
+        0,
+        "sub-frame push yields nothing"
+    );
 }
 
 #[test]
@@ -94,4 +98,49 @@ fn frame_layout_is_thirty_words() {
     // TDD §4.4: 29 f32 + 1 u32 = 30 words, padding-free.
     assert_eq!(size_of::<AnalysisFrame>(), 30 * 4);
     assert_eq!(size_of::<sonorant_core::Formant>(), 3 * 4);
+}
+
+#[test]
+fn a_peak_at_full_scale_is_not_a_clip_but_a_rail_run_is() {
+    // The synthetic vowel is normalised to exactly 1.0 at each pulse peak. One
+    // sample at the rail is a peak, not an overload.
+    let mut steady = FrameAnalyzer::new(44_100);
+    steady.push(&vowel(150.0));
+    let mut out = vec![AnalysisFrame::default(); 64];
+    let drained = steady.drain(&mut out);
+    assert!(drained > 0);
+    for frame in &out[..drained] {
+        assert_eq!(
+            (frame.flags as i64) & (flags::CLIPPED as i64),
+            0,
+            "a single-sample peak at full scale is not a clip"
+        );
+    }
+
+    // Samples pinned at the rail for a run are.
+    let mut overloaded = FrameAnalyzer::new(44_100);
+    overloaded.push(&vec![1.0f32; 2048]);
+    let mut out = vec![AnalysisFrame::default(); 4];
+    let drained = overloaded.drain(&mut out);
+    assert!(drained > 0);
+    assert_ne!(
+        (out[0].flags as i64) & (flags::CLIPPED as i64),
+        0,
+        "a run at the digital rail is a clip"
+    );
+
+    // Two touching samples are still a peak, not a flat top.
+    let mut two = FrameAnalyzer::new(44_100);
+    let mut signal = vec![0.0f32; 2048];
+    signal[100] = 1.0;
+    signal[101] = 1.0;
+    two.push(&signal);
+    let mut out = vec![AnalysisFrame::default(); 4];
+    let drained = two.drain(&mut out);
+    assert!(drained > 0);
+    assert_eq!(
+        (out[0].flags as i64) & (flags::CLIPPED as i64),
+        0,
+        "two samples at the rail is not yet a flat top"
+    );
 }
