@@ -5,7 +5,7 @@ use std::io::{self, BufWriter, Write};
 use sonorant_analysis::{flags, AnalysisFrame};
 
 use crate::wav;
-use crate::{analyze_pcm, parse_number, params_for};
+use crate::{parse_number, params_for};
 
 /// Output column order, kept in lockstep with [`write_row`].
 const HEADER: &str = "t_ms,f0_hz,voicing,f0_confidence,\
@@ -19,6 +19,8 @@ pub struct Options {
     pub lpc_order: Option<u16>,
     pub limit: Option<usize>,
     pub quiet: bool,
+    /// Apply the session baseline, so `scale_semitones` is meaningful.
+    pub session: bool,
 }
 
 pub fn parse(args: &[String]) -> Result<Options, String> {
@@ -28,12 +30,14 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
     let mut lpc_order = None;
     let mut limit = None;
     let mut quiet = false;
+    let mut session = false;
 
     let mut i = 0;
     while i < args.len() {
         let arg = args[i].as_str();
         match arg {
             "--quiet" => quiet = true,
+            "--session" => session = true,
             "--frame-len" | "--hop" | "--lpc-order" | "--limit" => {
                 let value = args
                     .get(i + 1)
@@ -69,13 +73,18 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
         lpc_order,
         limit,
         quiet,
+        session,
     })
 }
 
 pub fn run(opts: &Options) -> Result<(), String> {
     let (spec, mono) = wav::open_and_read(&opts.input)?;
     let params = params_for(spec.sample_rate, opts.frame_len, opts.hop, opts.lpc_order);
-    let mut frames = analyze_pcm(params, &mono);
+    let mut frames = if opts.session {
+        crate::analyze_pcm_session(params, &mono)
+    } else {
+        crate::analyze_pcm(params, &mono)
+    };
     if let Some(limit) = opts.limit {
         frames.truncate(limit);
     }

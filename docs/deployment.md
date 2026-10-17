@@ -10,7 +10,8 @@ There is no backend. "Deploy" means publishing a static bundle and release binar
 ## What ships
 
 - **A static bundle** — `index.html`, the app JS, `sonorant_ffi_bg.wasm`, the worklet shim, the worker, and `_headers`. Servable from any static host, CDN, object store, or local Caddy/nginx. No environment variables, no server runtime, no database.
-- **A CLI** — the native Rust `sonorant-cli` (crates.io) and the npm `sonorant-cli` (Ink), plus the npm `sonorant` WASM wrapper.
+- **A CLI** — the native Rust `sonorant-cli` (crates.io) and the npm `sonorant-cli` (Ink), plus the npm `sonorant` WASM wrapper and the npm `sonorant-react` visualizations.
+- **A documentation site** — `apps/docs`, published to GitHub Pages by `.github/workflows/docs.yml`. Developer documentation plus the `sonorant-react` visualization showcase. Static, like the app: no backend, no network calls.
 - **Nothing else.** There is no service tier.
 
 ---
@@ -71,6 +72,7 @@ Adapted for this project: there is no backend, no migrations, and no server-side
 - [ ] Flags default off: `isEnabled(key)` returns `false` for every key in `apps/web/src/flags.js`.
 - [ ] Egress scan clean: `npm run check:bundle`.
 - [ ] Automated browser checks pass: `npm run check:web`.
+- [ ] Documentation site builds and its browser check passes: `npm run build && npm run check:docs`.
 - [ ] `EXPECTED_WASM_SHA256` matches `packages/sonorant/pkg/sonorant_ffi_bg.wasm`.
 
 **Post-deploy**

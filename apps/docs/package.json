@@ -1,0 +1,29 @@
+{
+  "name": "@sonorant/docs",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Sonorant documentation site and visualization showcase (GitHub Pages).",
+  "license": "Unlicense",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_OPTIONS=--conditions=sonorant-source vite",
+    "build": "NODE_OPTIONS=--conditions=sonorant-source vite build",
+    "preview": "NODE_OPTIONS=--conditions=sonorant-source vite preview",
+    "test": "node --test",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sonorant": "^0.4.0",
+    "sonorant-react": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
+  }
+}

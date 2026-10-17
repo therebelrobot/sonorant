@@ -1,0 +1,151 @@
+/* sonorant-react default styles.
+ *
+ * Unopinionated and small: layout and legibility only. Colour is never the sole
+ * carrier of meaning — the components always spell the confidence band out in
+ * text — so these rules are safe to override wholesale. */
+
+.sonorant-pad,
+.sonorant-trend {
+  margin: 0;
+  font: 12px/1.4 system-ui, sans-serif;
+  color: #1b1b1b;
+}
+
+.sonorant-pad__svg,
+.sonorant-trend__svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.sonorant-trend__frame,
+.sonorant-pad__frame {
+  fill: none;
+  stroke: #333;
+  stroke-width: 1;
+}
+
+.sonorant-pad__grid-line {
+  stroke: #bbb;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.sonorant-trend__trace {
+  fill: none;
+  stroke: #3a6ea5;
+  stroke-width: 1.5;
+}
+
+.sonorant-pad__trace {
+  fill: none;
+  stroke: #3a6ea5;
+  stroke-width: 1.5;
+}
+
+.sonorant-pad__dot {
+  fill: #3a6ea5;
+}
+
+.sonorant-pad__current rect {
+  fill: none;
+  stroke: #1b1b1b;
+  stroke-width: 2;
+}
+
+.sonorant-pad__current circle {
+  fill: none;
+  stroke: #1b1b1b;
+  stroke-width: 2;
+}
+
+.sonorant-pad__tick,
+.sonorant-trend__axis,
+.sonorant-trend__empty {
+  fill: #333;
+  font-size: 11px;
+}
+
+.sonorant-pad__warn,
+.sonorant-trend__boundary text,
+.sonorant-trend__stopped {
+  fill: #7a4d00;
+  font-size: 12px;
+}
+
+.sonorant-trend__boundary line {
+  stroke: #7a4d00;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.sonorant-pad__caption,
+.sonorant-trend__caption {
+  margin-top: 6px;
+  color: #444;
+  max-width: 60ch;
+}
+
+.sonorant-summary__heading,
+.sonorant-summary__caveat {
+  margin: 0 0 4px;
+}
+
+.sonorant-summary__caveat {
+  color: #7a4d00;
+}
+
+.sonorant-summary__lines {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.sonorant-meters {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+}
+
+.sonorant-meters__row {
+  display: contents;
+}
+
+.sonorant-meters__label {
+  font-weight: 600;
+}
+
+.sonorant-meters__units,
+.sonorant-meters__note {
+  font-weight: 400;
+  color: #666;
+}
+
+.sonorant-meters__missing {
+  color: #666;
+  font-style: italic;
+}
+
+.sonorant-meters__confidence[data-band="low"],
+.sonorant-badge[data-band="low"] {
+  color: #7a4d00;
+}
+
+.sonorant-meters__confidence[data-band="medium"],
+.sonorant-badge[data-band="medium"] {
+  color: #5a5a00;
+}
+
+.sonorant-meters__confidence[data-band="high"],
+.sonorant-badge[data-band="high"] {
+  color: #1b5e20;
+}
+
+.sonorant-badge {
+  font-variant-numeric: tabular-nums;
+}
+
+.sonorant-flags {
+  margin: 0;
+}

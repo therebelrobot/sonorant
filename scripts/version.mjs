@@ -64,13 +64,17 @@ export const COPIES = [
 export const NPM_WORKSPACES = [
   { workspace: "sonorant", manifest: "packages/sonorant/package.json" },
   { workspace: "sonorant-cli", manifest: "packages/sonorant-cli/package.json" },
+  { workspace: "sonorant-react", manifest: "packages/sonorant-react/package.json" },
   { workspace: "@sonorant/web", manifest: "apps/web/package.json" },
+  { workspace: "@sonorant/docs", manifest: "apps/docs/package.json" },
 ];
 
 /** Workspace dependencies that pin the release version, and so must move with it. */
 export const NPM_RANGES = [
   { workspace: "sonorant-cli", dependency: "sonorant" },
   { workspace: "@sonorant/web", dependency: "sonorant" },
+  { workspace: "@sonorant/docs", dependency: "sonorant" },
+  { workspace: "@sonorant/docs", dependency: "sonorant-react" },
 ];
 
 // ---- reading -----------------------------------------------------------------
