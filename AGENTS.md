@@ -39,9 +39,11 @@ sonorant/
   apps/
     web/                # TS UI + AudioWorklet shim + Worker
     desktop/            # Tauri 2 shell reusing apps/web
+    docs/               # GitHub Pages docs site + visualization showcase
   packages/
     sonorant/           # npm: WASM core wrapper (library)
     sonorant-cli/       # npm: user-facing CLI, TypeScript + Ink
+    sonorant-react/     # npm: reusable React visualizations
   package.json          # npm workspace root (workspaces field)
   turbo.json
   docs/
@@ -61,8 +63,10 @@ sonorant/
 | Rust batch analyser, conformance harness, fixture generator | `crates/sonorant-cli/` |
 | Web UI, AudioWorklet shim, Worker | `apps/web/` |
 | Tauri 2 desktop shell | `apps/desktop/` |
+| Documentation site + visualization showcase (GitHub Pages) | `apps/docs/` |
 | npm WASM core wrapper (library) | `packages/sonorant/` |
 | npm user-facing CLI (TypeScript + Ink) | `packages/sonorant-cli/` |
+| npm reusable React visualizations | `packages/sonorant-react/` |
 
 ---
 
