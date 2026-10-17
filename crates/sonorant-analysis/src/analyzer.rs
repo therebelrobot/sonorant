@@ -53,17 +53,16 @@ fn has_rail_run(frame: &[f32]) -> bool {
 const LOW_SNR_HNR_DB: f32 = 10.0;
 
 /// Creak is a low, aperiodic pulse register (Hollien & Michel 1968; Keating,
-/// Kuang & Esposito 2012).
+/// Kuang & Esposito 2012): low **and** poorly periodic, not one or the other.
 ///
-/// **The band is partly out of reach, and that is recorded rather than hidden.**
-/// Canonical creak is 20–60 Hz, below this pipeline's tracker floor of
-/// `pitch::DEFAULT_MIN_F0_HZ` (60 Hz, and ~43 Hz at most in a 2048-sample frame),
-/// so genuine fry reads *unvoiced* and cannot be flagged at all. What can be
-/// caught is the edge: a frame that is still voiced, low, and poorly periodic.
-/// At 68 Hz such a frame bottoms out at ~13 dB HNR, so 15 dB is the threshold
-/// here — roughly the same "how periodic" as 10 dB at 150 Hz, because a 46 ms
-/// frame holds three cycles at 68 Hz and fourteen at 150 Hz. A longer analysis
-/// window is the real fix (TDD §16.7).
+/// With the tracker floor at `pitch::DEFAULT_MIN_F0_HZ` (45 Hz) this reaches the
+/// pulse register up to `CREAK_MAX_F0_HZ`. Measured on a synthetic pulse train it
+/// fires from 49 Hz to 70 Hz under mild turbulence, and stays silent on a *clean*
+/// low voice of the same pitch — which is the distinction that matters, since
+/// many people simply have a low voice. Below ~43 Hz it cannot fire at all: YIN
+/// cannot test a lag longer than half the frame, so fry at 20–40 Hz still reads
+/// unvoiced (TDD §16.7). The 15 dB is derived from where this pipeline's
+/// harmonicity sits in that band, not from a clinical cut.
 const CREAK_MAX_F0_HZ: f32 = 70.0;
 const CREAK_MAX_HNR_DB: f32 = 15.0;
 

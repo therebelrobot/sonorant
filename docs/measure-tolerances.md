@@ -20,7 +20,7 @@ order 24, pre-emphasis 0.97, Hann window.
 
 | Measure | Band (synthetic) | Notes |
 |---|---|---|
-| F0 (`f0_hz`) | ±2 % | Measured within ±2 % for 90–300 Hz synthetic vowels; typically <1 % for clean periodic input. YIN with parabolic interpolation. |
+| F0 (`f0_hz`) | ±2 % | Measured within ±2 % for 90–300 Hz synthetic vowels; typically <1 % for clean periodic input. YIN with parabolic interpolation. The tracker covers 45–1200 Hz (`pitch::DEFAULT_MIN_F0_HZ`, `MAX_F0_HZ`); a lag longer than half the frame caps the low end near 43 Hz. |
 | Formant frequencies (`formants[].hz`) | ±10 % (F1–F3) | On the published reference, F1–F3 land within ~3 %; the band is deliberately wider than the current error. To be tightened against Praat in S2.3. |
 | Formant bandwidth | not asserted | Returned by the pole radius; no band until Praat conformance. |
 | HNR (`hnr_db`) | not asserted | Boersma's normalised autocorrelation coefficient at the pitch period, taken over the lagged overlap. **Corrected 2026-10-16:** the coefficient was previously divided by the *whole* frame's energy, a bias of about `lag / frame_len` — so a low voice read as a noisy one (a clean 68 Hz pulse train read 3.0 dB; it now reads ~60 dB). No band until Praat conformance. |
@@ -91,7 +91,7 @@ All live in `sonorant-analysis`.
 |---|---|---|
 | `CLIPPED` | a run of ≥ 3 consecutive samples within 1e-6 of the digital rail | A single sample at full scale is a peak, not an overload: every recording normalised to peak amplitude is that case. |
 | `LOW_SNR` | voiced and `hnr_db < 10` | **Derived, not copied.** The clinical cut is 7 dB, but a frame noisy enough to reach it is no longer detected as voiced; measured on the synthetic vowel, a voiced frame bottoms out near 8.9 dB. 10 dB is "voiced, at the edge of voicing". |
-| `CREAK` | voiced, `f0_hz <= 70`, and `hnr_db < 15` | Canonical creak (20–60 Hz) is below the tracker's 60 Hz floor and reads *unvoiced*, so this catches the low, poorly-periodic edge only — the tracker floor is the limit, not the window (TDD §16.7). The number is derived from where this pipeline's harmonicity sits in that band, not from a clinical cut. |
+| `CREAK` | voiced, `f0_hz <= 70`, and `hnr_db < 15` | Low **and** poorly periodic, never one alone. Fires from 49 Hz to 70 Hz on a synthetic train under mild turbulence, and stays silent on a *clean* low voice of the same pitch. Below ~43 Hz it cannot fire at all — YIN cannot test a lag longer than half the frame (TDD §16.7). The number is derived from this pipeline, not from a clinical cut. |
 | `SUBHARMONIC` | the lag at twice the reported period is more periodic than the reported period by more than `features::SUBHARMONIC_MARGIN` (0.05), measured over the measurement window | YIN takes the *smallest* lag under threshold, so a strong half-period similarity reports an octave-high f0 — a wrong number read as a change in the voice. |
 | `FORMANT_UNSTABLE` | the frame has formants and their mean confidence is < 0.25 | As TDD §4.1. |
 | `UNCALIBRATED` | no calibration is attached | As TDD §4.2. |

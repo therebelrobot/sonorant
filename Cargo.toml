@@ -13,6 +13,6 @@ members = [
 
 # Shared across every crate so CORE_VERSION stays aligned (TDD §9, §15).
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 license = "Unlicense"

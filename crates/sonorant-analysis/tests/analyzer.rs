@@ -268,6 +268,35 @@ fn a_clean_vowel_is_not_subharmonic() {
 }
 
 #[test]
+fn the_pulse_register_is_measurable_and_can_be_creak() {
+    // 50 Hz sits inside the pulse register and was *unvoiced* before the tracker
+    // floor moved to 45 Hz: a creaky voice then had no pitch and no flag at all.
+    let clean = synthetic::perturbed_pulse_train(&[882], &[1.0], 44_100.0, 0.8);
+    let clean_frames = analyze(&clean);
+    let voiced: Vec<&AnalysisFrame> = clean_frames.iter().filter(|f| f.f0_hz > 0.0).collect();
+    assert!(!voiced.is_empty(), "50 Hz is voiced");
+    assert!(
+        voiced.iter().all(|f| (f.f0_hz - 50.0).abs() / 50.0 < 0.02),
+        "50 Hz must be measured as 50 Hz"
+    );
+    assert!(
+        voiced.iter().all(|f| !has(f, flags::CREAK)),
+        "a clean 50 Hz voice is low, not creaky"
+    );
+
+    // The same pitch with turbulence is creak: low *and* aperiodic.
+    let mut noisy = synthetic::perturbed_pulse_train(&[882], &[1.0], 44_100.0, 0.8);
+    let mut noise = Lcg(11);
+    for value in noisy.iter_mut() {
+        *value += 0.05 * noise.next_f32();
+    }
+    assert!(
+        analyze(&noisy).iter().any(|f| has(f, flags::CREAK)),
+        "a low, aperiodic frame in the pulse register is creak"
+    );
+}
+
+#[test]
 fn the_measurement_window_makes_a_low_pitch_measurable() {
     // At 70 Hz a 2048-sample frame holds 2.9 cycles — below `MIN_PERIODS`, so a
     // frame-only analysis cannot estimate perturbation. The 4096-sample

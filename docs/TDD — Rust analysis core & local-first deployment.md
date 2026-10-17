@@ -716,14 +716,14 @@ left as an intention.
    time budget, since a phone must be able to open its own archive in reasonable time.
 6. Whether the local store should be SQLite (via a WASM build) rather than IndexedDB. Deferred
    because IndexedDB handles the current row shapes and avoids a second storage engine.
-7. **The tracker floor, not the window.** The periodicity measures now look back over
-   `measurement_len` (4096 samples, ~93 ms), which brings `jitter_local`, `shimmer_local` and HNR
-   down to roughly 45 Hz. What remains is `CREAK`: canonical creak is 20–60 Hz, and the tracker's
-   own floor is `pitch::DEFAULT_MIN_F0_HZ` (60 Hz — about 43 Hz is the best one frame can offer,
-   since YIN needs a lag no longer than half the frame). Genuine fry therefore still reads
-   *unvoiced*. Lowering the floor to ~45 Hz would reach most of the pulse register; it changes the
-   YIN search window and so the f0 series, which makes it a measure change, so it needs a
-   decision rather than a guess.
+7. **Below ~43 Hz nothing is measurable, and that is structural.** The tracker reaches 45 Hz
+   (`pitch::DEFAULT_MIN_F0_HZ`), and the periodicity measures reach about the same place, so the
+   low end of the tool now ends in one spot instead of two. What is left out is genuine fry at
+   20–40 Hz: YIN cannot test a lag longer than half the frame, so those frames read *unvoiced* and
+   `CREAK` cannot fire. Reaching them needs a **longer frame**, not a lower constant — the hard
+   limit is `tau_max <= n / 2` — and a longer frame trades away the time resolution the pitch
+   track depends on. Decision needed if that range matters; `CREAK` is silent there rather than
+   guessing.
 
 ---
 

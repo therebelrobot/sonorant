@@ -9,7 +9,15 @@ pub struct Pitch {
     pub confidence: f32,
 }
 
-pub const DEFAULT_MIN_F0_HZ: f32 = 60.0;
+/// Lowest fundamental the tracker will consider, in Hz.
+///
+/// 45 Hz rather than a rounder 40: YIN can only test lags up to half the frame
+/// (`tau_max <= n / 2`), which at 44.1 kHz and a 2048-sample frame is 43 Hz. A
+/// lower constant would promise a range the estimator cannot reach. It also
+/// matches the floor of the periodicity measures, so the whole low end of the
+/// tool ends at the same place — a second constant would just be a second place
+/// for the two to disagree.
+pub const DEFAULT_MIN_F0_HZ: f32 = 45.0;
 pub const DEFAULT_MAX_F0_HZ: f32 = 1200.0;
 pub const DEFAULT_THRESHOLD: f32 = 0.15;
 
