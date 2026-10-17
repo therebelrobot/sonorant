@@ -100,6 +100,9 @@ pub struct FrameAnalyzer {
     buffer: Vec<f32>,
     /// Session sample index of `buffer[0]`, for `t_ms`.
     buffer_origin: u64,
+    /// The samples immediately before `buffer[0]`, so the periodicity measures can
+    /// look back `measurement_len` samples rather than one frame.
+    history: Vec<f32>,
     pending: Vec<AnalysisFrame>,
     /// Previous frame's formant frequencies, for the stability term.
     prev_formant_hz: [f32; MAX_FORMANTS],
@@ -118,6 +121,7 @@ impl FrameAnalyzer {
             params: AnalysisParams::new(sample_rate),
             buffer: Vec::new(),
             buffer_origin: 0,
+            history: Vec::new(),
             pending: Vec::new(),
             prev_formant_hz: [0.0; MAX_FORMANTS],
             has_prev: false,
@@ -128,7 +132,7 @@ impl FrameAnalyzer {
         self.params
     }
 
-    fn analyze(&self, frame: &[f32], t_ms: u32) -> AnalysisFrame {
+    fn analyze(&self, frame: &[f32], measurement: &[f32], t_ms: u32) -> AnalysisFrame {
         let p = &self.params;
         let sr = p.sample_rate as f32;
 
@@ -145,23 +149,25 @@ impl FrameAnalyzer {
             p.voicing_threshold,
         );
         let cpp = cepstrum::cpp(&cepstrum::real_cepstrum(&framed), sr);
-        let hnr_db = features::hnr_db(frame, sr, pitch_est.f0_hz);
+        // Harmonicity and the octave check use the long window, not the frame.
+        let hnr_db = features::hnr_db(measurement, sr, pitch_est.f0_hz);
 
         let mut slot = [Formant::default(); MAX_FORMANTS];
         for (i, f) in found.iter().take(MAX_FORMANTS).enumerate() {
             slot[i] = *f;
         }
 
-        // Voiced-cycle perturbation (TDD §4.1). `NaN` when the frame is unvoiced
-        // or holds fewer than `MIN_PERIODS` cycles — see `perturbation`.
+        // Voiced-cycle perturbation (TDD §4.1). `NaN` when the measurement window
+        // is unvoiced or holds fewer than `MIN_PERIODS` cycles — see
+        // `perturbation`.
         let (jitter_local, shimmer_local) =
-            perturbation::jitter_shimmer(frame, sr, pitch_est.f0_hz);
+            perturbation::jitter_shimmer(measurement, sr, pitch_est.f0_hz);
 
         let mut fl = flags::UNCALIBRATED;
         if has_rail_run(frame) {
             fl += flags::CLIPPED;
         }
-        if pitch_est.subharmonic {
+        if features::is_subharmonic(measurement, sr, pitch_est.f0_hz) {
             fl += flags::SUBHARMONIC;
         }
         if is_low_snr(&pitch_est, hnr_db) {
@@ -200,11 +206,24 @@ impl FrameAnalyzer {
             return 0;
         }
         let sample_rate = self.params.sample_rate.max(1) as u64;
+        // How far back the periodicity window reaches, beyond the frame itself.
+        let keep = self.params.measurement_len.saturating_sub(frame_len);
         let mut produced = 0;
         while self.buffer.len() >= frame_len {
             let t_ms = (self.buffer_origin * 1000 / sample_rate) as u32;
             let frame: Vec<f32> = self.buffer[..frame_len].to_vec();
-            let mut analysis = self.analyze(&frame, t_ms);
+
+            // Periodicity needs several cycles, which one frame does not hold below
+            // ~86 Hz, so HNR and the perturbation measures look back over the
+            // measurement window instead of the frame.
+            let mut measurement = Vec::with_capacity(keep + frame_len);
+            if keep > 0 {
+                let start = self.history.len().saturating_sub(keep);
+                measurement.extend_from_slice(&self.history[start..]);
+            }
+            measurement.extend_from_slice(&frame);
+
+            let mut analysis = self.analyze(&frame, &measurement, t_ms);
             temper_stability(&self.prev_formant_hz, self.has_prev, &mut analysis);
             apply_unstable_flag(&mut analysis);
             for i in 0..MAX_FORMANTS {
@@ -213,7 +232,15 @@ impl FrameAnalyzer {
             self.has_prev = true;
             self.pending.push(analysis);
             produced += 1;
+
             let advance = hop.min(self.buffer.len());
+            if keep > 0 {
+                self.history.extend_from_slice(&self.buffer[..advance]);
+                let excess = self.history.len().saturating_sub(keep);
+                if excess > 0 {
+                    self.history.drain(..excess);
+                }
+            }
             self.buffer.drain(..advance);
             self.buffer_origin += advance as u64;
         }
@@ -279,6 +306,7 @@ impl Analyzer for FrameAnalyzer {
     fn reset(&mut self) {
         self.buffer.clear();
         self.buffer_origin = 0;
+        self.history.clear();
         self.pending.clear();
         self.prev_formant_hz = [0.0; MAX_FORMANTS];
         self.has_prev = false;

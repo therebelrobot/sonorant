@@ -225,6 +225,10 @@ pub struct AnalysisParams {
     pub sample_rate: u32,
     pub frame_len: usize,       // 2048 default
     pub hop: usize,             // 512 default @44.1k => ~86 fps
+    /// Window for the periodicity measures (HNR, jitter, shimmer, octave check),
+    /// which need several cycles. Pitch, formants and the spectral features stay
+    /// on `frame_len`, so the pitch track keeps its time resolution. 4096 default.
+    pub measurement_len: usize,
     pub pre_emphasis: f32,      // 0.97
     pub lpc_order: u16,         // clamp(2 + sr/1000, 18, 24)
     pub max_formant_hz: f32,    // 5500 default
@@ -253,6 +257,12 @@ pub trait Analyzer {
   not displayable. The perturbation measures carry no field of their own — the frame is flat and
   fixed (§4.4) — so their confidence is `f0_confidence`, because the cycle marks are derived from
   the pitch estimate.
+- **The periodicity measures use a longer window than the frame.** HNR, `jitter_local`,
+  `shimmer_local` and the octave check need several cycles, and one 2048-sample frame holds fewer
+  than four below ~86 Hz. They are taken over `measurement_len` samples ending at the frame, while
+  pitch, formants and the spectral features stay on `frame_len` so the pitch track keeps its time
+  resolution. The frames overlap inside that window, so these series are smoothed — deliberately,
+  and stated here rather than discovered later.
 - **No perceptual scales in the core.** Bark mapping, semitone conversion, and reference
   comparison live in the UI. Exception: `scale_semitones`, which is unit-bearing by definition.
 
@@ -706,16 +716,14 @@ left as an intention.
    time budget, since a phone must be able to open its own archive in reasonable time.
 6. Whether the local store should be SQLite (via a WASM build) rather than IndexedDB. Deferred
    because IndexedDB handles the current row shapes and avoids a second storage engine.
-7. **Per-frame measures below ~86 Hz.** The perturbation measures need
-   `perturbation::MIN_PERIODS` (4) cycles and HNR needs several, so at the default 2048-sample
-   frame and 44.1 kHz the floor is near 86 Hz; the tracker's own floor is 60 Hz
-   (`DEFAULT_MIN_F0_HZ`, and ~43 Hz at most inside one frame). The consequences are recorded
-   rather than hidden: `jitter_local` and `shimmer_local` are `NaN` below the floor, and `CREAK`
-   catches only the edge of the pulse register, because canonical creak (20–60 Hz) reads
-   unvoiced. **The fix is a longer analysis window** — a second, long-window pass for the
-   low-frequency measures — which is a change to the §4.1 contract and therefore needs a
-   decision. The `LOW_SNR` (10 dB) and `CREAK` (15 dB) thresholds are derived from where this
-   pipeline's voicing gate actually sits and move with it; they are not clinical cuts.
+7. **The tracker floor, not the window.** The periodicity measures now look back over
+   `measurement_len` (4096 samples, ~93 ms), which brings `jitter_local`, `shimmer_local` and HNR
+   down to roughly 45 Hz. What remains is `CREAK`: canonical creak is 20–60 Hz, and the tracker's
+   own floor is `pitch::DEFAULT_MIN_F0_HZ` (60 Hz — about 43 Hz is the best one frame can offer,
+   since YIN needs a lag no longer than half the frame). Genuine fry therefore still reads
+   *unvoiced*. Lowering the floor to ~45 Hz would reach most of the pulse register; it changes the
+   YIN search window and so the f0 series, which makes it a measure change, so it needs a
+   decision rather than a guess.
 
 ---
 

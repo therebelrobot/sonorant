@@ -47,6 +47,12 @@ within ±25 % of the expected period). Assuming a constant period would measure 
 assumption rather than the voice. Praat's *local* definitions are used, so both are
 percentages and a perfectly steady voice reads 0.
 
+HNR and these measures are taken over the **measurement window** (`measurement_len`, 4096
+samples, ~93 ms), not the 2048-sample frame: periodicity needs several cycles, and a 46 ms
+frame does not hold four below ~86 Hz. Pitch, formants and the spectral features still come
+from the frame, so the pitch track keeps its time resolution. The frames overlap inside the
+window, so these series are smoothed.
+
 Neither has a dedicated confidence field, and the flat all-`f32` frame (TDD §4.4) has no
 room to add one without a `CORE_ABI_VERSION` bump. Their confidence is therefore the
 frame's **`f0_confidence`**: the period marks are derived from the pitch estimate, so a
@@ -60,12 +66,11 @@ The core never emits a non-finite value outside these cases (TDD §14):
 
 - `spl_db` — `NaN` whenever no calibration is active (TDD §4.2). The frame analyzer
   sets it and raises the `UNCALIBRATED` flag.
-- `jitter_local`, `shimmer_local` — `NaN` for an unvoiced frame (`f0_hz <= 0`), or when
-  the frame holds fewer than `sonorant_core::perturbation::MIN_PERIODS` (4) detected
-  cycles. `NaN` means "not measured", never a measured zero. At the default 2048-sample
-  frame and 44.1 kHz that is roughly f0 ≥ 86 Hz; a low voice is not measurable in a
-  46 ms frame, and the per-utterance summary over many frames is where a session-level
-  number comes from.
+- `jitter_local`, `shimmer_local` — `NaN` for an unvoiced frame (`f0_hz <= 0`), or when the
+  **measurement window** holds fewer than `sonorant_core::perturbation::MIN_PERIODS` (4) detected
+  cycles. `NaN` means "not measured", never a measured zero. At the default 4096-sample window
+  (~93 ms) that is roughly f0 ≥ 45 Hz. Before that window existed the floor was ~86 Hz, because a
+  2048-sample frame does not hold four cycles below it.
 - `hnr_db`, `h1_h2_db` — `NaN` for an unvoiced frame (`f0_hz <= 0`) or a frame with no
   usable harmonics.
 - `cpp_db` — `NaN` when the quefrency band is too small to measure a peak.
@@ -86,8 +91,8 @@ All live in `sonorant-analysis`.
 |---|---|---|
 | `CLIPPED` | a run of ≥ 3 consecutive samples within 1e-6 of the digital rail | A single sample at full scale is a peak, not an overload: every recording normalised to peak amplitude is that case. |
 | `LOW_SNR` | voiced and `hnr_db < 10` | **Derived, not copied.** The clinical cut is 7 dB, but a frame noisy enough to reach it is no longer detected as voiced; measured on the synthetic vowel, a voiced frame bottoms out near 8.9 dB. 10 dB is "voiced, at the edge of voicing". |
-| `CREAK` | voiced, `f0_hz <= 70`, and `hnr_db < 15` | A 46 ms frame holds three cycles at 68 Hz, so a voiced low frame bottoms out near 13 dB there. Canonical creak (20–60 Hz) is below the tracker floor and reads unvoiced, so this catches the edge only — the frame length is the real limit (TDD §16.7). |
-| `SUBHARMONIC` | the lag at twice the chosen period is more periodic than the chosen one by more than `pitch::SUBHARMONIC_MARGIN` (0.05) | YIN takes the *smallest* lag under threshold, so a strong half-period similarity reports an octave-high f0 — a wrong number read as a change in the voice. |
+| `CREAK` | voiced, `f0_hz <= 70`, and `hnr_db < 15` | Canonical creak (20–60 Hz) is below the tracker's 60 Hz floor and reads *unvoiced*, so this catches the low, poorly-periodic edge only — the tracker floor is the limit, not the window (TDD §16.7). The number is derived from where this pipeline's harmonicity sits in that band, not from a clinical cut. |
+| `SUBHARMONIC` | the lag at twice the reported period is more periodic than the reported period by more than `features::SUBHARMONIC_MARGIN` (0.05), measured over the measurement window | YIN takes the *smallest* lag under threshold, so a strong half-period similarity reports an octave-high f0 — a wrong number read as a change in the voice. |
 | `FORMANT_UNSTABLE` | the frame has formants and their mean confidence is < 0.25 | As TDD §4.1. |
 | `UNCALIBRATED` | no calibration is attached | As TDD §4.2. |
 

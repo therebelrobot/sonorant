@@ -7,23 +7,11 @@ pub struct Pitch {
     pub f0_hz: f32,
     /// 0..1: one minus the YIN aperiodicity at the chosen lag.
     pub confidence: f32,
-    /// True when the lag at *twice* the chosen period is decisively more periodic
-    /// than the chosen one. YIN takes the smallest lag under threshold
-    /// (de Cheveigné & Kawahara 2002), so a strong half-period similarity makes it
-    /// report an octave-high f0; this is the signal that `f0_hz` may be a
-    /// sub-multiple of the true fundamental.
-    pub subharmonic: bool,
 }
 
 pub const DEFAULT_MIN_F0_HZ: f32 = 60.0;
 pub const DEFAULT_MAX_F0_HZ: f32 = 1200.0;
 pub const DEFAULT_THRESHOLD: f32 = 0.15;
-
-/// How much more periodic the two-period lag must be than the chosen one before
-/// the estimate is called a possible subharmonic. Chosen, not published: a
-/// perfectly periodic signal reads the same at both lags, so the margin only has
-/// to be wide enough that measurement noise cannot cross it.
-pub const SUBHARMONIC_MARGIN: f32 = 0.05;
 
 /// YIN pitch estimate for `frame`.
 ///
@@ -39,7 +27,6 @@ pub fn yin(
     const UNVOICED: Pitch = Pitch {
         f0_hz: 0.0,
         confidence: 0.0,
-        subharmonic: false,
     };
 
     let n = frame.len();
@@ -116,15 +103,8 @@ pub fn yin(
     let idx = (tau_est.round() as usize).min(tau_max);
     let aperiodicity = cmnd[idx].clamp(0.0, 1.0);
 
-    // Octave-error check (the `SUBHARMONIC` flag): YIN took the smallest lag under
-    // threshold, so ask whether twice that lag is a decisively better period. If it
-    // is, the chosen lag is likely half the true one.
-    let doubled = t * 2;
-    let subharmonic = doubled <= tau_max && cmnd[doubled] < cmnd[t] - SUBHARMONIC_MARGIN;
-
     Pitch {
         f0_hz: sample_rate / tau_est,
         confidence: (1.0 - aperiodicity).clamp(0.0, 1.0),
-        subharmonic,
     }
 }

@@ -59,11 +59,21 @@ pub struct AnalysisParams {
     pub sample_rate: u32,
     pub frame_len: usize,
     pub hop: usize,
+    /// Window for the **periodicity measures** — HNR, jitter, shimmer and the
+    /// octave check — which need several cycles. One 46 ms frame does not hold
+    /// four cycles below ~86 Hz, so those measures are taken over the last
+    /// `measurement_len` samples instead. Pitch, formants and the spectral
+    /// features still come from `frame_len`. Zero means "use `frame_len`".
+    pub measurement_len: usize,
     pub pre_emphasis: f32,
     pub lpc_order: u16,
     pub max_formant_hz: f32,
     pub voicing_threshold: f32,
 }
+
+/// Default periodicity window: 4096 samples, ~93 ms at 44.1 kHz — about four
+/// cycles at 45 Hz, which is where the tracker's own reach ends.
+pub const DEFAULT_MEASUREMENT_LEN: usize = 4096;
 
 /// Default LPC order: `clamp(2 + sample_rate / 1000, 18, 24)` (TDD §4.1).
 pub fn default_lpc_order(sample_rate: u32) -> u16 {
@@ -71,13 +81,15 @@ pub fn default_lpc_order(sample_rate: u32) -> u16 {
 }
 
 impl AnalysisParams {
-    /// Spec defaults (TDD §4.1): `frame_len` 2048, `hop` 512, `pre_emphasis`
-    /// 0.97, `max_formant_hz` 5500, LPC order `clamp(2 + sr/1000, 18, 24)`.
+    /// Spec defaults (TDD §4.1): `frame_len` 2048, `hop` 512, `measurement_len`
+    /// 4096, `pre_emphasis` 0.97, `max_formant_hz` 5500, LPC order
+    /// `clamp(2 + sr/1000, 18, 24)`.
     pub fn new(sample_rate: u32) -> Self {
         Self {
             sample_rate,
             frame_len: 2048,
             hop: 512,
+            measurement_len: DEFAULT_MEASUREMENT_LEN,
             pre_emphasis: 0.97,
             lpc_order: default_lpc_order(sample_rate),
             max_formant_hz: 5500.0,

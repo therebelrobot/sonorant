@@ -2,7 +2,7 @@
 //! `reset`. (The pipeline now lives in `sonorant-analysis`.)
 
 use sonorant_analysis::{flags, AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
-use sonorant_core::synthetic;
+use sonorant_core::{perturbation, synthetic};
 
 const SR: f32 = 44100.0;
 
@@ -265,4 +265,32 @@ fn a_clean_vowel_is_not_subharmonic() {
             "a clean periodic frame has no octave error"
         );
     }
+}
+
+#[test]
+fn the_measurement_window_makes_a_low_pitch_measurable() {
+    // At 70 Hz a 2048-sample frame holds 2.9 cycles — below `MIN_PERIODS`, so a
+    // frame-only analysis cannot estimate perturbation. The 4096-sample
+    // measurement window holds 6.5, which is the point of having one.
+    let signal = synthetic::perturbed_pulse_train(&[630], &[1.0], 44_100.0, 0.6);
+    let single_frame = &signal[8192..8192 + 2048];
+    let (framed_jitter, _) = perturbation::jitter_shimmer(single_frame, 44_100.0, 70.0);
+    assert!(
+        framed_jitter.is_nan(),
+        "a 70 Hz frame alone is too short to measure"
+    );
+
+    let frames = analyze(&signal);
+    let voiced: Vec<&AnalysisFrame> = frames.iter().filter(|f| f.f0_hz > 0.0).collect();
+    assert!(!voiced.is_empty(), "a 70 Hz train is voiced");
+    assert!(
+        voiced.iter().any(|f| f.jitter_local.is_finite()),
+        "the measurement window makes 70 Hz measurable"
+    );
+    assert!(
+        voiced
+            .iter()
+            .any(|f| f.hnr_db.is_finite() && f.hnr_db > 30.0),
+        "a clean 70 Hz train is highly periodic, not noisy"
+    );
 }

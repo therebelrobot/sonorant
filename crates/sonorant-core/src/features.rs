@@ -124,10 +124,26 @@ pub fn hnr_db(frame: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
         return f32::NAN;
     }
     let lag = (sample_rate / f0_hz).round() as usize;
-    if lag == 0 || lag >= frame.len() {
-        return f32::NAN;
+    let r = match autocorrelation(frame, lag) {
+        Some(r) if r.is_finite() && r > 0.0 => r,
+        _ => return f32::NAN,
+    };
+    let r = r.min(1.0 - 1e-6);
+    let hnr = 10.0 * (r / (1.0 - r)).log10();
+    if hnr.is_finite() {
+        hnr
+    } else {
+        f32::NAN
     }
+}
 
+/// The normalised autocorrelation coefficient of `frame` at `lag`, over the
+/// lagged overlap: `Σ x[i]·x[i−lag] / √(Σ x[i]² · Σ x[i−lag]²)`.
+/// `None` when the lag cannot be evaluated or a side has no energy.
+pub fn autocorrelation(frame: &[f32], lag: usize) -> Option<f32> {
+    if lag == 0 || lag >= frame.len() {
+        return None;
+    }
     let (mut num, mut now_energy, mut lagged_energy) = (0.0f32, 0.0f32, 0.0f32);
     for i in lag..frame.len() {
         let now = frame[i];
@@ -137,19 +153,39 @@ pub fn hnr_db(frame: &[f32], sample_rate: f32, f0_hz: f32) -> f32 {
         lagged_energy += lagged * lagged;
     }
     let denominator = (now_energy * lagged_energy).sqrt();
-    if !(denominator > 0.0) {
-        return f32::NAN;
-    }
-
-    let r = num / denominator;
-    if !r.is_finite() || r <= 0.0 {
-        return f32::NAN;
-    }
-    let r = r.min(1.0 - 1e-6);
-    let hnr = 10.0 * (r / (1.0 - r)).log10();
-    if hnr.is_finite() {
-        hnr
+    if denominator > 0.0 {
+        Some(num / denominator)
     } else {
-        f32::NAN
+        None
+    }
+}
+
+/// How much more periodic the two-period lag must be than the one-period lag
+/// before the estimate is called a possible subharmonic. Chosen, not published: a
+/// perfectly periodic signal reads the same at both lags, so the margin only has
+/// to be wide enough that measurement noise cannot cross it.
+pub const SUBHARMONIC_MARGIN: f32 = 0.05;
+
+/// `SUBHARMONIC` (TDD §4.1): true when the lag at **twice** the reported period is
+/// decisively more periodic than the reported period itself.
+///
+/// YIN takes the smallest lag under threshold (de Cheveigné & Kawahara 2002), so a
+/// strong half-period similarity makes it report an octave-high f0 — a wrong
+/// number that a user reads as a change in their voice.
+pub fn is_subharmonic(frame: &[f32], sample_rate: f32, f0_hz: f32) -> bool {
+    if frame.is_empty() || sample_rate <= 0.0 || f0_hz <= 0.0 {
+        return false;
+    }
+    let lag = (sample_rate / f0_hz).round() as usize;
+    if lag == 0 {
+        return false;
+    }
+    let doubled = lag.saturating_mul(2);
+    if doubled >= frame.len() {
+        return false;
+    }
+    match (autocorrelation(frame, lag), autocorrelation(frame, doubled)) {
+        (Some(one), Some(two)) => two > one + SUBHARMONIC_MARGIN,
+        _ => false,
     }
 }

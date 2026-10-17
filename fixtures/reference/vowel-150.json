@@ -1,7 +1,7 @@
 {
   "fixture_format": 1,
-  "generator": "sonorant-cli 0.2.0",
-  "core_version": "0.2.0",
+  "generator": "sonorant-cli 0.3.0",
+  "core_version": "0.3.0",
   "description": "synthetic vowel, f0 150 Hz, formants 700/1220/2600 Hz, 0.3 s @ 44100 Hz",
   "input": {
     "sample_rate": 44100,
