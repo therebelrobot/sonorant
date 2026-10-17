@@ -11,7 +11,7 @@ use sonorant_analysis::{AnalysisFrame, AnalysisParams};
 use sonorant_core::{tolerances, CORE_VERSION};
 
 use crate::wav;
-use crate::{analyze_pcm, parse_number, params_for};
+use crate::{analyze_pcm, params_for, parse_number};
 
 pub struct Options {
     pub input: String,
@@ -76,7 +76,13 @@ pub fn run(opts: &Options) -> Result<(), String> {
     let (spec, mono) = wav::open_and_read(&opts.input)?;
     let params = params_for(spec.sample_rate, opts.frame_len, opts.hop, opts.lpc_order);
     let frames = analyze_pcm(params, &mono);
-    let json = build_fixture(&opts.description, spec.sample_rate, spec.channels, params, &frames);
+    let json = build_fixture(
+        &opts.description,
+        spec.sample_rate,
+        spec.channels,
+        params,
+        &frames,
+    );
 
     match &opts.out {
         Some(path) => {
@@ -136,7 +142,11 @@ fn build_fixture(
     params: AnalysisParams,
     frames: &[AnalysisFrame],
 ) -> String {
-    let voiced: Vec<f32> = frames.iter().filter(|f| f.f0_hz > 0.0).map(|f| f.f0_hz).collect();
+    let voiced: Vec<f32> = frames
+        .iter()
+        .filter(|f| f.f0_hz > 0.0)
+        .map(|f| f.f0_hz)
+        .collect();
     let f0 = median(&voiced);
 
     let formants: Vec<Option<f32>> = (0..3)
@@ -153,6 +163,8 @@ fn build_fixture(
 
     let hnr = median(&frames.iter().map(|f| f.hnr_db).collect::<Vec<f32>>());
     let rms = median(&frames.iter().map(|f| f.rms_dbfs).collect::<Vec<f32>>());
+    let jitter = median(&frames.iter().map(|f| f.jitter_local).collect::<Vec<f32>>());
+    let shimmer = median(&frames.iter().map(|f| f.shimmer_local).collect::<Vec<f32>>());
 
     let mut s = String::new();
     s.push_str("{\n");
@@ -162,7 +174,10 @@ fn build_fixture(
         env!("CARGO_PKG_VERSION")
     ));
     s.push_str(&format!("  \"core_version\": \"{CORE_VERSION}\",\n"));
-    s.push_str(&format!("  \"description\": \"{}\",\n", escape(description)));
+    s.push_str(&format!(
+        "  \"description\": \"{}\",\n",
+        escape(description)
+    ));
     s.push_str("  \"input\": {\n");
     s.push_str(&format!("    \"sample_rate\": {sample_rate},\n"));
     s.push_str(&format!("    \"channels\": {channels},\n"));
@@ -173,7 +188,14 @@ fn build_fixture(
     s.push_str("  },\n");
     s.push_str("  \"tolerances\": {\n");
     s.push_str(&format!("    \"f0_rel\": {},\n", tolerances::F0_REL));
-    s.push_str(&format!("    \"formant_rel\": {}\n", tolerances::FORMANT_REL));
+    s.push_str(&format!(
+        "    \"formant_rel\": {},\n",
+        tolerances::FORMANT_REL
+    ));
+    s.push_str(&format!(
+        "    \"perturbation_abs\": {}\n",
+        tolerances::PERTURBATION_ABS
+    ));
     s.push_str("  },\n");
     s.push_str("  \"expected\": {\n");
     s.push_str(&format!("    \"f0_hz\": {},\n", num(f0)));
@@ -184,7 +206,9 @@ fn build_fixture(
         num(formants[2])
     ));
     s.push_str(&format!("    \"hnr_db\": {},\n", num(hnr)));
-    s.push_str(&format!("    \"rms_dbfs\": {}\n", num(rms)));
+    s.push_str(&format!("    \"rms_dbfs\": {},\n", num(rms)));
+    s.push_str(&format!("    \"jitter_local\": {},\n", num(jitter)));
+    s.push_str(&format!("    \"shimmer_local\": {}\n", num(shimmer)));
     s.push_str("  }\n}\n");
     s
 }

@@ -34,10 +34,8 @@ pub fn vowel(f0_hz: f32, formants: &[(f32, f32)], sample_rate: f32, duration_s: 
                 let w = if pulse_len == 1 {
                     1.0
                 } else {
-                    0.5
-                        - 0.5
-                            * (2.0 * core::f32::consts::PI * k as f32 / (pulse_len - 1) as f32)
-                                .cos()
+                    0.5 - 0.5
+                        * (2.0 * core::f32::consts::PI * k as f32 / (pulse_len - 1) as f32).cos()
                 };
                 x[i + k] += w;
             }
@@ -73,6 +71,50 @@ pub fn vowel(f0_hz: f32, formants: &[(f32, f32)], sample_rate: f32, duration_s: 
         for v in x.iter_mut() {
             *v /= peak;
         }
+    }
+    x
+}
+
+/// A pulse train whose successive cycles take their period (in samples) and peak
+/// amplitude from the supplied slices, cycling through them. The pulse is the
+/// same short raised cosine as [`vowel`], with no vocal-tract resonators, so the
+/// period and amplitude sequence is exact and reproducible.
+///
+/// This is the ground truth for the perturbation measures (TDD §4.1): a known
+/// `periods`/`amplitudes` sequence fixes what `jitter_local` and `shimmer_local`
+/// must read.
+pub fn perturbed_pulse_train(
+    periods: &[usize],
+    amplitudes: &[f32],
+    sample_rate: f32,
+    duration_s: f32,
+) -> Vec<f32> {
+    let n = (sample_rate * duration_s).max(0.0) as usize;
+    let mut x = vec![0.0f32; n];
+    if n == 0 || sample_rate <= 0.0 || periods.is_empty() || amplitudes.is_empty() {
+        return x;
+    }
+    let max_period = periods.iter().copied().max().unwrap_or(1).max(1);
+    let pulse_len = ((0.0002 * sample_rate) as usize).max(2).min(max_period);
+
+    let mut i = 0usize;
+    let mut cycle = 0usize;
+    while i < n {
+        let period = periods[cycle % periods.len()].max(1);
+        let amplitude = amplitudes[cycle % amplitudes.len()];
+        for k in 0..pulse_len {
+            if i + k >= n {
+                break;
+            }
+            let w = if pulse_len == 1 {
+                1.0
+            } else {
+                0.5 - 0.5 * (2.0 * core::f32::consts::PI * k as f32 / (pulse_len - 1) as f32).cos()
+            };
+            x[i + k] += amplitude * w;
+        }
+        i += period;
+        cycle += 1;
     }
     x
 }

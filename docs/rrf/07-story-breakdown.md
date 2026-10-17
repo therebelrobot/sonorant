@@ -208,6 +208,11 @@ the critical path, and SPL is unreachable in v1. Tracked as issue #2.
 - Given an uncalibrated session, When a frame is assembled, Then `spl_db` is `NaN` and the
   `UNCALIBRATED` flag is set. — *Owner: Engineering*
 - Given a frame with a measured quantity, When it is emitted, Then it carries a confidence value. — *Owner: Engineering*
+- Given a voiced frame holding at least `MIN_PERIODS` detected cycles, When it is assembled, Then
+  `jitter_local` and `shimmer_local` carry the voiced-cycle period and amplitude perturbation in
+  percent, checked against a synthetic pulse train with a known period and amplitude sequence
+  (`synthetic::perturbed_pulse_train`); given an unvoiced frame, or one too short to hold
+  `MIN_PERIODS` cycles, Then both are `NaN`. — *Owner: Engineering*
 
 #### S2.2 — Session state machine
 

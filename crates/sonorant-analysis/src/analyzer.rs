@@ -5,7 +5,7 @@
 //! and the WASM surface (S3.1) drive.
 
 use sonorant_core::formants::{self, Formant, MAX_FORMANTS};
-use sonorant_core::{cepstrum, features, lpc, pitch, spectrum, window};
+use sonorant_core::{cepstrum, features, lpc, perturbation, pitch, spectrum, window};
 
 use crate::frame::{flags, AnalysisFrame, AnalysisParams};
 
@@ -89,6 +89,11 @@ impl FrameAnalyzer {
             fl += flags::CLIPPED;
         }
 
+        // Voiced-cycle perturbation (TDD §4.1). `NaN` when the frame is unvoiced
+        // or holds fewer than `MIN_PERIODS` cycles — see `perturbation`.
+        let (jitter_local, shimmer_local) =
+            perturbation::jitter_shimmer(frame, sr, pitch_est.f0_hz);
+
         AnalysisFrame {
             t_ms,
             f0_hz: pitch_est.f0_hz,
@@ -105,9 +110,8 @@ impl FrameAnalyzer {
             rms_dbfs: features::rms_dbfs(frame),
             // Uncalibrated until a calibration exists (S7); flagged UNCALIBRATED.
             spl_db: f32::NAN,
-            // Not implemented yet; voiced-cycle segmentation lands with S2.1.
-            jitter_local: f32::NAN,
-            shimmer_local: f32::NAN,
+            jitter_local,
+            shimmer_local,
             flags: fl,
         }
     }

@@ -4,9 +4,7 @@
 //! Deterministic and dependency-free: a small LCG generates the noise shapes, so a
 //! failure is reproducible.
 
-use sonorant_analysis::{
-    AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer, SessionAnalyzer,
-};
+use sonorant_analysis::{AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer, SessionAnalyzer};
 
 /// A tiny deterministic LCG (Numerical Recipes constants).
 struct Lcg(u64);
@@ -66,13 +64,30 @@ fn assert_outputs_sane(frame: &AnalysisFrame, context: &str) {
     ] {
         assert!(value.is_finite(), "{context}: {name} is {value}");
     }
-    assert!((0.0..=1.0).contains(&frame.voicing), "{context}: voicing out of range");
+    assert!(
+        (0.0..=1.0).contains(&frame.voicing),
+        "{context}: voicing out of range"
+    );
     assert!(
         (0.0..=1.0).contains(&frame.f0_confidence),
         "{context}: f0_confidence out of range"
     );
+    // The perturbation measures are either not measured (`NaN`) or a non-negative
+    // percentage; never a negative or infinite value (TDD §4.1).
+    for (name, value) in [
+        ("jitter_local", frame.jitter_local),
+        ("shimmer_local", frame.shimmer_local),
+    ] {
+        assert!(
+            value.is_nan() || (value.is_finite() && value >= 0.0),
+            "{context}: {name} is {value}"
+        );
+    }
     for (i, formant) in frame.formants.iter().enumerate() {
-        assert!(formant.hz.is_finite(), "{context}: formants[{i}].hz not finite");
+        assert!(
+            formant.hz.is_finite(),
+            "{context}: formants[{i}].hz not finite"
+        );
         assert!(
             formant.bandwidth_hz.is_finite(),
             "{context}: formants[{i}].bandwidth_hz not finite"

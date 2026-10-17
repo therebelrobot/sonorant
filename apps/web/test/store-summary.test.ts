@@ -64,6 +64,17 @@ test("summary counts flags per bit", () => {
 
 test("summary has null stat blocks for measures with no data", () => {
   const summary = buildAnalysisSummary([frame()], { coreVersion: "0.1.0" });
-  assert.equal(summary.jitter_local, null, "not implemented -> no data, not zero");
+  assert.equal(summary.jitter_local, null, "no finite value in the utterance -> null, not zero");
   assert.equal(summary.shimmer_local, null);
+});
+
+test("summary surfaces a measured jitter and shimmer", () => {
+  const frames = [
+    frame({ t_ms: 0, jitter_local: 0.4, shimmer_local: 2.1 }),
+    frame({ t_ms: 100, jitter_local: 0.6, shimmer_local: 2.5 }),
+  ];
+  const summary = buildAnalysisSummary(frames, { coreVersion: "0.1.0" });
+
+  assert.equal(summary.jitter_local.median, 0.6);
+  assert.equal(summary.shimmer_local.median, 2.5);
 });

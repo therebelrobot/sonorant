@@ -10,6 +10,7 @@ pub mod complex;
 pub mod features;
 pub mod formants;
 pub mod lpc;
+pub mod perturbation;
 pub mod pitch;
 pub mod spectrum;
 pub mod synthetic;

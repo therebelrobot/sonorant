@@ -2,13 +2,17 @@
   "oracle_format": 1,
   "source": "synthetic-truth",
   "reference": "fixtures/reference/vowel-150.wav",
-  "description": "synthetic vowel: f0 150 Hz, formants 700/1220/2600 Hz (exact resonator parameters, not a Praat measurement)",
+  "description": "synthetic vowel: f0 150 Hz, formants 700/1220/2600 Hz (exact resonator parameters, not a Praat measurement); perturbation is zero because the period and the cycle amplitude are both exactly constant",
   "measures": {
     "f0_hz": { "expected": 150.0, "tolerance_rel": 0.02 },
     "formants_hz": [
       { "expected": 700.0, "tolerance_rel": 0.1 },
       { "expected": 1220.0, "tolerance_rel": 0.1 },
       { "expected": 2600.0, "tolerance_rel": 0.1 }
-    ]
+    ],
+    "perturbation": {
+      "jitter_local": { "expected": 0.0, "tolerance_abs": 0.1 },
+      "shimmer_local": { "expected": 0.0, "tolerance_abs": 0.1 }
+    }
   }
 }

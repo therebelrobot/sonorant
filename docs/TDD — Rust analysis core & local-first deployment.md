@@ -185,7 +185,12 @@ pub struct AnalysisFrame {
     pub scale_semitones: f32,
     pub rms_dbfs: f32,
     pub spl_db: f32,            // NaN unless a calibration is active
+    /// Voiced-cycle period perturbation, in percent. NaN unless the frame is
+    /// voiced and holds >= MIN_PERIODS (4) detected cycles. Its confidence is
+    /// `f0_confidence` (§4.2): the period marks come from the pitch estimate.
     pub jitter_local: f32,
+    /// Voiced-cycle amplitude perturbation, in percent, on the peak |x| within
+    /// each cycle. NaN under the same conditions as `jitter_local`.
     pub shimmer_local: f32,
     /// Bitfield of the flags module below, stored as an `f32` so the struct
     /// stays all-`f32` for the flat `Float32Array` view (§4.4).
@@ -231,7 +236,9 @@ pub trait Analyzer {
 - **`spl_db` is `NaN` without a calibration.** Not zero, not an estimate. `NaN` forces every
   consumer to handle "uncalibrated" explicitly rather than plotting a fake SPL axis.
 - **Confidence on every measured quantity.** The UI rule is that a value without a confidence is
-  not displayable.
+  not displayable. The perturbation measures carry no field of their own — the frame is flat and
+  fixed (§4.4) — so their confidence is `f0_confidence`, because the cycle marks are derived from
+  the pitch estimate.
 - **No perceptual scales in the core.** Bark mapping, semitone conversion, and reference
   comparison live in the UI. Exception: `scale_semitones`, which is unit-bearing by definition.
 
@@ -259,9 +266,9 @@ impl Engine {
 
 ### 4.4 Wire layout
 
-`AnalysisFrame` is a fixed-size struct of 28 `f32`s plus `t_ms` (`u32`) and `flags` (`f32` bitfield)
-— 30 words total (29 `f32` + 1 `u32`). JS reads it as a `Float32Array` over `memory.buffer` with a
-stride of 30 words and the field order in §4.1. The layout is versioned with `CORE_ABI_VERSION`; a
+`AnalysisFrame` is a fixed-size struct of 29 `f32`s plus `t_ms` (`u32`) — 30 words total (29 `f32`
++ 1 `u32`); `flags` is one of the `f32`s. JS reads it as a `Float32Array` over `memory.buffer` with
+a stride of 30 words and the field order in §4.1. The layout is versioned with `CORE_ABI_VERSION`; a
 mismatch between the JS reader and the core is a hard startup failure, not a silent misread.
 
 ---

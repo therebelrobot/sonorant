@@ -13,12 +13,15 @@
   },
   "tolerances": {
     "f0_rel": 0.02,
-    "formant_rel": 0.1
+    "formant_rel": 0.1,
+    "perturbation_abs": 0.1
   },
   "expected": {
     "f0_hz": 150.0009,
     "formants_hz": [724.2514, 1206.1888, 2578.6404],
     "hnr_db": 7.7733,
-    "rms_dbfs": -9.4489
+    "rms_dbfs": -9.4489,
+    "jitter_local": 0.0000,
+    "shimmer_local": 0.0002
   }
 }
