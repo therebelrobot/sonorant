@@ -17,6 +17,7 @@ import {
   toHistoryViewModel,
 } from "./store/history.ts";
 import { buildTrendSeries, segmentDistribution, trendPoints, trendTextAlternative } from "./store/trends.ts";
+import { MEASUREMENT_COPY, measurementLines, measurementRows } from "./store/measurements.ts";
 import { TrendView } from "./pad/trend-view.ts";
 import { fromBundle, toBundle } from "./store/bundle.ts";
 import { ensureMeasureVersion, getAll, openDatabase, putRows } from "./store/indexed-db.ts";
@@ -193,6 +194,51 @@ async function compareLatest() {
     view.hidden = false;
   } catch {
     caveat.textContent = HISTORY_COPY.loadError.body;
+  }
+}
+
+/**
+ * Render the latest session's stored measurements (the `AnalysisSummary`).
+ * Everything shown here was already measured and stored; it simply had nowhere
+ * to be read.
+ */
+async function showMeasurements() {
+  const view = el("measurements-view");
+  const list = el("measurements-list");
+  const empty = el("measurements-empty");
+  view.hidden = false;
+  try {
+    const { utterances, sessions } = await loadHistory();
+    const latestSession = [...sessions].sort((a, b) => b.started_at - a.started_at)[0];
+    const latest = utterances.find((u) => u.session_id === (latestSession?.id ?? ""));
+    const summary = latest ? parse(latest.metrics_json) : null;
+
+    if (!summary) {
+      el("measurements-lines").replaceChildren();
+      list.replaceChildren();
+      empty.textContent = MEASUREMENT_COPY.empty;
+      return;
+    }
+
+    const calibrated = latestSession?.calibration_id != null;
+    el("measurements-lines").replaceChildren(
+      ...measurementLines(summary, { calibrated }).map(listItem),
+    );
+
+    const rows = measurementRows(summary, { calibrated });
+    empty.textContent = rows.length ? "" : MEASUREMENT_COPY.noData;
+    list.replaceChildren(
+      ...rows.flatMap((row) => {
+        const term = document.createElement("dt");
+        term.textContent = row.units ? `${row.label} (${row.units})` : row.label;
+        const value = document.createElement("dd");
+        const range = `p05–p95 ${row.range}`;
+        value.textContent = [row.value, range, row.note].filter(Boolean).join(" · ");
+        return [term, value];
+      }),
+    );
+  } catch {
+    empty.textContent = HISTORY_COPY.loadError.body;
   }
 }
 
@@ -380,6 +426,7 @@ el("compare").addEventListener("click", () => {
 el("trend-open").addEventListener("click", () => {
   if (isEnabled("enable-longitudinal-trends")) showTrend();
 });
+el("measurements-open").addEventListener("click", showMeasurements);
 el("trend-channel").addEventListener("change", () => {
   if (isEnabled("enable-longitudinal-trends")) showTrend();
 });

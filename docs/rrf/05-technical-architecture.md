@@ -306,9 +306,16 @@ These are JSON Schema (draft 2020-12) drafts of the data contracts. The **identi
 }
 ```
 
-### 3.4 `AnalysisSummary` — PROPOSED DRAFT, NEEDS CONFIRMATION
+### 3.4 `AnalysisSummary` — DRAFT, ADOPTED IN THE UI (SIGN-OFF OUTSTANDING)
 
 > **This structure is not defined in the TDD.** The TDD references `AnalysisSummary` only as the content of `utterance.metrics_json` (TDD §7.1). The structure below is a **proposed draft** derived from the measures the TDD and brief name, and it **must be confirmed before it is treated as a contract**. It is the single largest open item this phase surfaces (see §6).
+>
+> **Update 2026-10-17.** The shape is now produced (`apps/web/src/store/summary.ts`), stored on every
+> utterance, and **read by the measurements panel** — most of these numbers were measured and stored
+> for months with nowhere to be seen. Two decisions were needed to use it, and are recorded here
+> rather than left implicit: a measure with no data in an utterance is `null`, never a zero-filled
+> `StatBlock`; and confidence is per utterance (`confidence.mean_formant`), not per measure, so the
+> panel shows it once for the session. Sign-off on the shape itself is still the human's.
 
 ```json
 {
@@ -640,7 +647,12 @@ Everything else in the phase-4 register maps to a mechanism that exists in the T
 
 Items the TDD leaves open that this phase surfaces, plus discrepancies this phase found. Each is marked with its source.
 
-1. **`AnalysisSummary` structure — PROPOSED, needs confirmation.** The TDD references `AnalysisSummary` as the content of `utterance.metrics_json` (TDD §7.1) but does not define it. The draft in §3.4 is proposed and must be confirmed before it is treated as a contract. This is the largest open item this phase surfaces. (TDD §7.1; this document §3.4.)
+1. **`AnalysisSummary` structure — sign-off outstanding.** The TDD references `AnalysisSummary` as
+   the content of `utterance.metrics_json` (TDD §7.1) but does not define it. The draft in §3.4 is
+   proposed; as of 2026-10-17 it is produced and read by the UI (see the note in §3.4), which
+   settled the two decisions needed to use it (`null` for an empty block; utterance-level
+   confidence). Treating it as a *frozen* contract still needs the human's confirmation.
+   (TDD §7.1; this document §3.4.)
 2. **JSON representation of `spl_db` `NaN`.** The TDD specifies `spl_db` is `NaN` when uncalibrated (TDD §4.2), but JSON has no `NaN` literal. The schema in §3.2 uses `null`; the convention needs confirmation, and it must be consistent between the archive and the local rows. (TDD §4.2, §7.1, §8.)
 3. **Argon2id parameters for the archive KDF.** `m`, `t`, `p` need a decision against an explicit device-class time budget, since a phone must open its own archive in reasonable time. The parameters are recorded per archive in `manifest.json`, so they are a two-way door (TW-7). (TDD §8, §16.5; phase 4 §1.2.)
 4. **SQLite versus IndexedDB for the local store.** Deferred because IndexedDB handles the current row shapes and avoids a second storage engine. The schema is the contract, not the engine, so this can be adopted behind the storage layer without changing the archive format. (TDD §7, §16.6; phase 4 TW-2.)

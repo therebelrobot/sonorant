@@ -1,13 +1,13 @@
 // AnalysisSummary — the per-utterance aggregate stored in `utterance.metrics_json`.
 //
-// **DRAFT.** This implements the proposed structure in
-// docs/rrf/05-technical-architecture.md §3.4, which is explicitly marked
-// "NEEDS CONFIRMATION". It is not yet a confirmed contract (phase 7 §6).
+// The structure is the draft in docs/rrf/05-technical-architecture.md §3.4. It is
+// not yet a frozen contract (sign-off outstanding), but it *is* now read: the
+// measurements panel renders it, so every field here has a reader.
 //
 // One gap in that draft: it requires a `StatBlock` (median/p05/p95/mean) for every
 // measure, but a measure with no data in an utterance (e.g. F0 in a silent one)
 // has no such numbers. This returns `null` for an empty block rather than
-// inventing zeros.
+// inventing zeros, and the panel omits the row — §3.4 records the decision.
 
 import { FLAGS } from "../pad/pad-model.ts";
 
