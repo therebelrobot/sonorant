@@ -1,0 +1,1 @@
+when working within monorepos, prefer running npm scripts using the `-w <PROJECT>` syntax from the repo root. DO NOT cd into the project directory to run commands locally unless it absolutely necessary.

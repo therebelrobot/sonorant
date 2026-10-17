@@ -1,0 +1,32 @@
+{
+  "name": "sonorant",
+  "version": "0.4.0",
+  "scripts": {
+    "test": "node --test",
+    "build": "esbuild src/index.ts --bundle --format=esm --external:../pkg/* --outfile=dist/index.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "license": "Unlicense",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "dist",
+    "pkg",
+    "src/index.d.ts",
+    "README.md"
+  ],
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therebelrobot/sonorant.git",
+    "directory": "packages/sonorant"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

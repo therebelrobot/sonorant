@@ -1,0 +1,27 @@
+{
+  "fixture_format": 1,
+  "generator": "sonorant-cli 0.4.0",
+  "core_version": "0.4.0",
+  "description": "synthetic vowel, f0 150 Hz, formants 700/1220/2600 Hz, 0.3 s @ 44100 Hz",
+  "input": {
+    "sample_rate": 44100,
+    "channels": 1,
+    "frame_len": 2048,
+    "hop": 512,
+    "lpc_order": 24,
+    "frames": 22
+  },
+  "tolerances": {
+    "f0_rel": 0.02,
+    "formant_rel": 0.1,
+    "perturbation_abs": 0.1
+  },
+  "expected": {
+    "f0_hz": 150.0009,
+    "formants_hz": [724.2514, 1206.1888, 2578.6404],
+    "hnr_db": 59.9427,
+    "rms_dbfs": -9.4489,
+    "jitter_local": 0.0000,
+    "shimmer_local": 0.0002
+  }
+}

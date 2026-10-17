@@ -1,0 +1,9 @@
+# Pinned toolchain for reproducible builds (TDD §15).
+#
+# `wasm-bindgen` (via `sonorant-ffi`) needs rustc >= 1.81, so the default 1.76 is
+# not sufficient. The wasm target is listed here so
+# `cargo build --target wasm32-unknown-unknown` works without extra setup.
+[toolchain]
+channel = "1.88.0"
+targets = ["wasm32-unknown-unknown"]
+components = ["rustfmt", "clippy"]

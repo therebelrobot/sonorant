@@ -1,0 +1,29 @@
+{
+  "name": "sonorant-monorepo",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "turbo run test && npm run test:release",
+    "build": "turbo run build",
+    "check:bundle": "node scripts/egress-scan.mjs",
+    "wasm:build": "cargo build -p sonorant-ffi --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir packages/sonorant/pkg --out-name sonorant_ffi target/wasm32-unknown-unknown/release/sonorant_ffi.wasm",
+    "check:web": "node scripts/verify-web.mjs",
+    "release:patch": "node scripts/version.mjs release patch --push",
+    "release:minor": "node scripts/version.mjs release minor --push",
+    "release:major": "node scripts/version.mjs release major --push",
+    "release:tags": "git tag --sort=-v:refname | grep \"^v\"",
+    "check:release": "node scripts/version.mjs check",
+    "test:release": "node --test \"scripts/*.test.mjs\""
+  },
+  "license": "Unlicense",
+  "type": "commonjs",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "playwright": "^1.64.1",
+    "turbo": "^2.11.8"
+  },
+  "packageManager": "npm@11.11.0"
+}

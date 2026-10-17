@@ -1,0 +1,9 @@
+[package]
+name = "sonorant-calibrate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Calibration store and dBFS to dB SPL conversion for Sonorant. SPL is NaN, never an estimate, until a calibration exists."
+repository.workspace = true
+
+[dependencies]

@@ -1,0 +1,10 @@
+[package]
+name = "sonorant-analysis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Frame pipeline and Analyzer contract for Sonorant: AnalysisFrame assembly and the session state machine."
+repository.workspace = true
+
+[dependencies]
+sonorant-core = { workspace = true }

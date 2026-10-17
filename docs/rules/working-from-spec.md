@@ -1,0 +1,5 @@
+- when implementing code from an accepted architecture or design doc, it is imperative that any delegated task follow the architecture as much as technically possible.
+- when an implementation task is complete, it is imperative that you do an audit task to ensure what was created matches the spec
+- if the delegated task finds a technical reason it cannot follow the spec, it is imperative that it presents this issue to the user, presents an alternative, and waits for acceptance of the alternative before continuing. It should NEVER assume what the user's response will be.
+- if accepted, it is imperative that the delegated task updates the spec document BEFORE continuing with the alternative. all references to the previous paradigm should be updated to reflect the new state of the codebase.
+- if a user directly guides the delegated task to deviate from the spec, this takes priority, and just like a technical alternative, it should be added/updated in the spec doc to reflect the guidance

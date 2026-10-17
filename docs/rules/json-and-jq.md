@@ -1,0 +1,1 @@
+when assessing/going through json responses or json files, use jq and filter for the information you need so as not to overwhelm the context window. Do not use python when jq can do the job.

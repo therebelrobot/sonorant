@@ -1,0 +1,19 @@
+{
+  "name": "@sonorant/web",
+  "version": "0.4.0",
+  "scripts": {
+    "test": "node --test",
+    "build": "rm -rf dist && cp -R public dist && esbuild src/app.ts src/worker.ts src/worklet/capture-processor.ts --bundle --format=esm --outbase=src --outdir=dist --external:./vendor/* --log-level=warning && mkdir -p dist/vendor/sonorant && cp -R ../../packages/sonorant/dist dist/vendor/sonorant/dist && cp -R ../../packages/sonorant/pkg dist/vendor/sonorant/pkg",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "license": "Unlicense",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "sonorant": "^0.4.0"
+  }
+}

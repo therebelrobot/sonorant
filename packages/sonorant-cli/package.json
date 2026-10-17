@@ -1,0 +1,38 @@
+{
+  "name": "sonorant-cli",
+  "version": "0.4.0",
+  "scripts": {
+    "test": "node --test",
+    "build": "esbuild src/main.tsx --bundle --platform=node --format=esm --packages=external --jsx=automatic --outfile=dist/main.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "license": "Unlicense",
+  "type": "module",
+  "bin": {
+    "sonorant-cli": "./bin/sonorant-cli.js"
+  },
+  "description": "Sonorant orchestration CLI (Ink)",
+  "dependencies": {
+    "ink": "^8.0.0",
+    "react": "^19.3.1",
+    "sonorant": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therebelrobot/sonorant.git",
+    "directory": "packages/sonorant-cli"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "bin"
+  ]
+}

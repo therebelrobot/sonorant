@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'none'"
+    />
+    <title>Sonorant</title>
+  </head>
+  <body>
+    <main>
+      <h1>Sonorant</h1>
+
+      <p id="checking">Checking your connection&hellip;</p>
+
+      <section id="insecure" role="alert" hidden>
+        <h2 id="insecure-heading"></h2>
+        <p id="insecure-body"></p>
+        <button id="reload" type="button"></button>
+      </section>
+
+      <section id="permission" hidden>
+        <h2 id="permission-heading"></h2>
+        <p id="permission-body"></p>
+        <button id="allow" type="button"></button>
+      </section>
+
+      <p id="status" role="status" aria-live="polite" hidden></p>
+
+      <section id="denied" role="alert" hidden>
+        <h2 id="denied-heading"></h2>
+        <p id="denied-body"></p>
+        <button id="retry" type="button"></button>
+      </section>
+
+      <section id="practice" hidden>
+        <h2>Live practice</h2>
+        <p id="pad-legend">
+          Pitch (Hz) runs across; resonance (semitones) runs up. Pitch is drawn as
+          circles; resonance is marked with squares.
+        </p>
+        <canvas
+          id="pad"
+          width="640"
+          height="360"
+          role="img"
+          aria-label="Pitch by resonance pad. A written summary is provided below the pad."
+        ></canvas>
+        <p id="pad-confidence" role="status" aria-live="polite"></p>
+        <p>Flags this session: <span id="pad-flags">none</span></p>
+        <p id="frame-count" role="status" aria-live="polite"></p>
+
+        <section id="recording" aria-labelledby="recording-heading">
+          <h3 id="recording-heading">Recording</h3>
+          <p id="recording-status"></p>
+          <button id="record-toggle" type="button" aria-pressed="false"></button>
+          <p id="recording-error" role="alert" hidden></p>
+          <button id="recording-continue" type="button" hidden></button>
+        </section>
+
+        <section id="summary" aria-labelledby="summary-heading">
+          <h3 id="summary-heading">Summary</h3>
+          <p id="summary-caveat" role="status" aria-live="polite"></p>
+          <ul id="summary-lines"></ul>
+        </section>
+
+        <section id="history" aria-labelledby="history-heading">
+          <h3 id="history-heading">History</h3>
+          <p id="history-status" role="status" aria-live="polite"></p>
+          <button id="finish" type="button">Finish session</button>
+          <button id="history-open" type="button">Open history</button>
+          <ul id="history-list"></ul>
+          <button id="compare" type="button">Compare the two most recent</button>
+          <div id="compare-view" hidden>
+            <h4 id="compare-heading"></h4>
+            <p id="compare-labels"></p>
+            <ul id="compare-lines"></ul>
+            <p id="compare-caveats" role="status" aria-live="polite"></p>
+            <p id="compare-normative"></p>
+          </div>
+
+          <button id="measurements-open" type="button">Show measurements</button>
+          <div id="measurements-view" hidden>
+            <h4 id="measurements-heading">Measurements</h4>
+            <ul id="measurements-lines"></ul>
+            <dl id="measurements-list"></dl>
+            <p id="measurements-empty" role="status" aria-live="polite"></p>
+          </div>
+
+          <div id="trend">
+            <h4 id="trend-heading">Trend</h4>
+            <p>
+              <label for="trend-channel">Measure</label>
+              <select id="trend-channel">
+                <option value="scale">Resonance (semitones)</option>
+                <option value="stability">Resonance stability (semitones)</option>
+              </select>
+            </p>
+            <button id="trend-open" type="button">Show trend</button>
+            <canvas
+              id="trend-canvas"
+              width="640"
+              height="200"
+              role="img"
+              aria-label="Trend chart. A written summary follows."
+            ></canvas>
+            <p id="trend-text" role="status" aria-live="polite"></p>
+            <p id="trend-distribution"></p>
+            <p id="trend-boundary" role="status"></p>
+            <p id="trend-stopped" role="status"></p>
+          </div>
+
+          <div id="archive">
+            <h4 id="archive-heading">Export and import</h4>
+
+            <p id="export-warning" role="alert" hidden></p>
+            <p>
+              <label>
+                <input type="checkbox" id="export-encrypt" checked />
+                Encrypt this file
+              </label>
+            </p>
+            <p>
+              <label for="export-passphrase">Passphrase</label>
+              <input type="password" id="export-passphrase" autocomplete="new-password" />
+            </p>
+            <button id="export-run" type="button">Export history</button>
+            <p id="export-status" role="status" aria-live="polite"></p>
+
+            <p>
+              <label for="import-file">Import a history file</label>
+              <input type="file" id="import-file" accept=".zip,application/zip" />
+            </p>
+            <p id="import-describe" role="status" aria-live="polite"></p>
+            <p>
+              <label for="import-passphrase">Passphrase</label>
+              <input type="password" id="import-passphrase" autocomplete="current-password" />
+            </p>
+            <button id="import-run" type="button">Import</button>
+            <p id="import-report" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

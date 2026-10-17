@@ -1,0 +1,12 @@
+[package]
+name = "sonorant-capture"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Native capture (cpal) and device enumeration for Sonorant's desktop shell."
+repository.workspace = true
+# Native only: cpal has no wasm target, so this ships inside the desktop shell
+# rather than to crates.io.
+publish = false
+
+[dependencies]
