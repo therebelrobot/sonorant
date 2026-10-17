@@ -4,9 +4,11 @@
   "scripts": {
     "test": "turbo run test && npm run test:release",
     "build": "turbo run build",
+    "dev:docs": "npm run dev -w @sonorant/docs",
     "check:bundle": "node scripts/egress-scan.mjs",
     "wasm:build": "cargo build -p sonorant-ffi --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir packages/sonorant/pkg --out-name sonorant_ffi target/wasm32-unknown-unknown/release/sonorant_ffi.wasm",
     "check:web": "node scripts/verify-web.mjs",
+    "check:docs": "node scripts/verify-docs.mjs",
     "release:patch": "node scripts/version.mjs release patch --push",
     "release:minor": "node scripts/version.mjs release minor --push",
     "release:major": "node scripts/version.mjs release major --push",
