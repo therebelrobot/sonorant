@@ -1,0 +1,57 @@
+{
+  "name": "sonorant-react",
+  "version": "0.4.0",
+  "description": "Reusable React visualizations for Sonorant voice-analysis frames: a pitch/resonance pad, longitudinal trend chart, confidence-bearing summary and voice-quality meters. No acoustic maths — it draws what the Rust core measured.",
+  "keywords": [
+    "sonorant",
+    "voice",
+    "react",
+    "visualization",
+    "speech",
+    "transgender-voice",
+    "pitch",
+    "formants"
+  ],
+  "license": "Unlicense",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "build": "rm -rf dist && esbuild src/index.ts --bundle --format=esm --jsx=automatic --external:react --external:react/jsx-runtime --outfile=dist/index.js --log-level=warning && tsc -p tsconfig.build.json && cp src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therebelrobot/sonorant.git",
+    "directory": "packages/sonorant-react"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
