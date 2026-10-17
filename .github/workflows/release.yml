@@ -1,20 +1,166 @@
-name: Release
+# Cuts a release, with exactly one human decision in it.
+#
+# On every push to main:
+#   * if this push *is* the release PR being merged, tag it, build it, and create
+#     the GitHub Release, then hand off to publish.yml (npm + crates.io);
+#   * otherwise, if the commits since the last tag are worth a release, open or
+#     update a release PR containing the version bump.
+#
+# Merging that PR is the approval, and that is deliberate rather than timid. A
+# registry publish cannot be undone — crates.io cannot delete or reuse a version —
+# and `CORE_VERSION` is stamped on every user's stored measurements (TDD §9), so
+# the version is a *measurement* claim. A conventional-commit bot can tell that a
+# `feat` happened; it cannot tell whether a measure moved. The release PR is where
+# a human looks.
+#
+# Why release.yml does not just push a tag and let a second workflow notice:
+# events raised by GITHUB_TOKEN do not trigger workflow runs. Pushing `v0.5.0`
+# from here would build nothing and publish nothing, silently. `workflow_dispatch`
+# is one of the two documented exceptions (repository_dispatch is the other), so
+# the hand-off is explicit.
+name: release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
-  id-token: write
-  attestations: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build and publish artifacts
+  plan:
+    name: Plan the release
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      mode: ${{ steps.decide.outputs.mode }}
+      version: ${{ steps.decide.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Decide
+        id: decide
+        run: |
+          set -euo pipefail
+          version="$(node scripts/version.mjs get)"
+          node scripts/version.mjs check
+
+          subject="$(git log -1 --format=%s)"
+          body="$(git log -1 --format=%b)"
+          is_release_push=false
+          if printf '%s' "$subject" | grep -qE "^chore\(release\): v${version}\b"; then
+            is_release_push=true                                    # squash or rebase merge
+          elif printf '%s' "$subject" | grep -qE "^Merge pull request" \
+            && printf '%s' "$body" | grep -qE "release/v${version}\b"; then
+            is_release_push=true                                    # merge commit
+          fi
+
+          if [ "$is_release_push" = true ] && ! git rev-parse "v${version}" >/dev/null 2>&1; then
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+            echo "version=${version}" >> "$GITHUB_OUTPUT"
+            echo "This push released ${version}."
+            exit 0
+          fi
+
+          next="$(node scripts/version.mjs plan)"
+          if [ -n "$next" ]; then
+            echo "mode=pr" >> "$GITHUB_OUTPUT"
+            echo "version=${next}" >> "$GITHUB_OUTPUT"
+            echo "Proposing ${next} in a release PR."
+          else
+            echo "mode=none" >> "$GITHUB_OUTPUT"
+            echo "Nothing to release."
+          fi
+
+  release-pr:
+    name: Open the release PR
+    needs: plan
+    if: needs.plan.outputs.mode == 'pr'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Prepare the bump
+        env:
+          NEXT: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          node scripts/version.mjs set "$NEXT"
+          node scripts/version.mjs check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "release/v${NEXT}"
+          git commit -am "chore(release): v${NEXT}"
+          git push -fu origin "release/v${NEXT}"
+
+          since="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          {
+            echo "Merging this tags \`v${NEXT}\`, creates the GitHub Release, and publishes to npm and crates.io."
+            echo
+            echo "**Check the bump before you merge it.** \`CORE_VERSION\` is stamped on every stored"
+            echo "measurement, so the number is a claim about what the tool measures (TDD §9), not"
+            echo "about an API. This was drafted from the commit subjects below — a changed measure"
+            echo "is not automatically a \`minor\`. Edit the version in this PR if it should differ."
+            echo
+            echo "### Commits since ${since:-the first commit}"
+            # shellcheck disable=SC2086
+            git log --format='- %s' ${since:+"${since}..HEAD"}
+          } > /tmp/release-pr.md
+          cat /tmp/release-pr.md
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh pr view "release/v${NEXT}" --json number >/dev/null 2>&1; then
+            gh pr edit "release/v${NEXT}" --title "chore(release): v${NEXT}" --body-file /tmp/release-pr.md
+          else
+            gh pr create --base main --head "release/v${NEXT}" \
+              --title "chore(release): v${NEXT}" --body-file /tmp/release-pr.md
+          fi
+
+  build:
+    name: Build and attest
+    needs: plan
+    if: needs.plan.outputs.mode == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@1.88.0
         with:
@@ -26,28 +172,26 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run build
 
-      - name: Build (wasm, web bundle, native CLI)
-        run: |
-          npm run wasm:build
-          npm run build
-          cargo build --release -p sonorant-cli
-
-      # The gates that must hold for a release (licences, advisories, egress/CSP).
       - name: Licence and advisory gate
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
+
       - name: Egress origin scan + CSP
         run: npm run check:bundle
 
       - name: Package artifacts
+        env:
+          REF_NAME: ${{ needs.plan.outputs.version }}
         run: |
           mkdir -p dist
-          tar -czf "dist/sonorant-web-${GITHUB_REF_NAME}.tar.gz" -C apps/web dist
-          tar -czf "dist/sonorant-cli-${GITHUB_REF_NAME}-x86_64-unknown-linux-gnu.tar.gz" -C target/release sonorant-cli
-          cp packages/sonorant/pkg/sonorant_ffi_bg.wasm "dist/sonorant_ffi_bg-${GITHUB_REF_NAME}.wasm"
-          (cd dist && sha256sum ./* > "SHA256SUMS-${GITHUB_REF_NAME}.txt")
+          tar -czf "dist/sonorant-web-v${REF_NAME}.tar.gz" -C apps/web dist
+          tar -czf "dist/sonorant-cli-v${REF_NAME}-x86_64-unknown-linux-gnu.tar.gz" \
+            -C target/release sonorant-cli
+          cp packages/sonorant/pkg/sonorant_ffi_bg.wasm "dist/sonorant_ffi_bg-v${REF_NAME}.wasm"
+          (cd dist && sha256sum ./* > "SHA256SUMS-v${REF_NAME}.txt")
           ls -la dist
 
       - name: Software bill of materials
@@ -62,9 +206,60 @@ jobs:
         with:
           subject-path: "dist/*"
 
-      - name: Publish release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
+          name: release-artifacts
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  github-release:
+    name: Create the GitHub Release
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+
+      - name: Tag and release
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.plan.outputs.version }}
           files: dist/*
           generate_release_notes: true
-          draft: true
+          draft: false # `release: published` fires for a human-made release, not for this one
+
+  dispatch-publish:
+    name: Publish to the registries
+    needs: [plan, github-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      # workflow_dispatch, not a tag push: see the note at the top of this file.
+      - name: Hand off to publish.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          gh workflow run publish.yml --ref main -f "tag=v${VERSION}"
+          echo "publish.yml dispatched for v${VERSION}"

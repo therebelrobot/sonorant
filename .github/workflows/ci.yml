@@ -47,6 +47,9 @@ jobs:
       - run: npm ci
       - name: Type-check TypeScript sources
         run: npm run typecheck --workspaces --if-present
+      # The release version lives in nine places; this fails if they disagree.
+      - name: The release version agrees everywhere
+        run: npm run check:release
       - run: npm run build
       # Egress origin scan + CSP check on the built bundle (S0.3, TDD §12).
       - run: npm run check:bundle

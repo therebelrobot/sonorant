@@ -1,0 +1,167 @@
+# Publishes a released version to npm and crates.io.
+#
+# Both registries are written with **trusted publishing** (OIDC): no NPM_TOKEN, no
+# CARGO_REGISTRY_TOKEN, nothing long-lived to leak. Provenance is attached to the
+# npm packages automatically.
+#
+# Two jobs, so the OIDC token never coexists with dependency code:
+#   build   — checks out the tag, builds, packs the tarballs. No id-token.
+#   publish — publishes exactly what build produced. No install, no lifecycle
+#             scripts, no dependency code in the same job as the token.
+#
+# One-time setup per registry is in docs/releasing.md. It is the maintainer's to
+# run: it needs 2FA.
+name: publish
+
+on:
+  # A human publishing a release from the GitHub UI.
+  release:
+    types: [published]
+  # Re-running a publish, or publishing a release this repo created itself:
+  # `workflow_dispatch` and `repository_dispatch` are the two events GitHub lets a
+  # GITHUB_TOKEN-created action trigger, which is why release.yml reaches this
+  # file this way rather than by pushing a tag and hoping.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to publish (e.g. v0.5.0)
+        required: true
+
+permissions: {}
+
+# Never cancel a release half way.
+concurrency:
+  group: publish-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  build:
+    name: Build and pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          package-manager-cache: false # never restore a cache into a release build
+
+      - name: The tag must match the version in every place
+        run: |
+          want="v$(node scripts/version.mjs get)"
+          if [ "$want" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match the release version $want"
+            exit 1
+          fi
+          node scripts/version.mjs check
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Pack the npm packages
+        run: |
+          mkdir -p dist-pack
+          npm pack -w sonorant --pack-destination dist-pack
+          npm pack -w sonorant-cli --pack-destination dist-pack
+          ls -l dist-pack
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-tarballs
+          path: dist-pack/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  npm:
+    name: Publish to npm
+    needs: build
+    runs-on: ubuntu-latest # trusted publishing requires GitHub-hosted runners
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # the token npm exchanges for a one-shot publish token
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: npm must support trusted publishing (>= 11.5.1)
+        run: |
+          node -e '
+            const [a,b,c] = process.argv[1].split(".").map(Number);
+            const ok = a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1)));
+            if (!ok) { console.error(`::error::npm ${process.argv[1]} is too old for trusted publishing`); process.exit(1); }
+          ' "$(npm --version)"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-tarballs
+          path: dist-pack
+
+      # --ignore-scripts: a published tarball must not run anything.
+      - name: Publish
+        run: |
+          for tarball in dist-pack/*.tgz; do
+            echo "publishing $(basename "$tarball")"
+            npm publish "$tarball" --ignore-scripts
+          done
+
+  crates:
+    name: Publish to crates.io
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # crates.io trades this for a temporary token
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
+      # Dependency order: a crate cannot publish before the ones it depends on,
+      # and the index can lag a few seconds behind the upload.
+      - name: Publish the crates
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          set -uo pipefail
+          for crate in sonorant-core sonorant-analysis sonorant-calibrate sonorant-archive sonorant-ffi; do
+            echo "::group::$crate"
+            for attempt in 1 2 3 4 5; do
+              if out=$(cargo publish -p "$crate" --locked 2>&1); then
+                echo "$out"
+                break
+              fi
+              echo "$out"
+              # A re-run after a partial publish must not fail the release.
+              case "$out" in
+                *"already uploaded"*|*"already exists"*) echo "already published; continuing"; break ;;
+              esac
+              if [ "$attempt" = 5 ]; then
+                echo "::error::$crate failed after $attempt attempts"
+                exit 1
+              fi
+              echo "attempt $attempt failed (the index may not have caught up); retrying in 30s"
+              sleep 30
+            done
+            echo "::endgroup::"
+          done

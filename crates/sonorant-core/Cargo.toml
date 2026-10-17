@@ -3,6 +3,8 @@ name = "sonorant-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Acoustic numerics for the Sonorant voice analysis core: FFT wrappers, LPC, YIN pitch, cepstrum and formants. No I/O, no target-specific code."
+repository.workspace = true
 
 [dependencies]
 realfft = "3.5.0"

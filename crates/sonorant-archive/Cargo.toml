@@ -3,6 +3,8 @@ name = "sonorant-archive"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "The Sonorant history export/import container, with AEAD (ChaCha20-Poly1305 over an Argon2id-derived key)."
+repository.workspace = true
 
 [dependencies]
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc"] }

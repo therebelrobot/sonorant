@@ -16,3 +16,13 @@ members = [
 version = "0.4.0"
 edition = "2021"
 license = "Unlicense"
+repository = "https://github.com/therebelrobot/sonorant"
+
+# Inter-crate dependencies live here so the release version is written once, by
+# `scripts/version.mjs`, instead of in every dependent manifest. crates.io
+# requires a path dependency to carry a version as well as a path, so these keep
+# both; a crate references one with `{ workspace = true }`.
+[workspace.dependencies]
+sonorant-core = { path = "crates/sonorant-core", version = "0.4.0" }
+sonorant-analysis = { path = "crates/sonorant-analysis", version = "0.4.0" }
+sonorant-archive = { path = "crates/sonorant-archive", version = "0.4.0" }
