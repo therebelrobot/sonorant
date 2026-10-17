@@ -12,6 +12,9 @@ node_modules/
 # Playwright CLI local state
 .playwright/
 
+# Motion-capture scratch (motion-capture skill)
+.motion/
+
 # Build output
 dist/
 **/dist/

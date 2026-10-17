@@ -43,6 +43,35 @@ reference vowel and over a synthetic pitch/resonance glide, and writes the per-f
 JSON the components consume. The outputs are committed, so CI needs no Rust
 toolchain. The fixture-shape test in `test/` guards against a stale regeneration.
 
+## Screenshots
+
+The demo, rendering the committed reference fixtures:
+
+![The visualizations demo: controls, the pitch/resonance pad with the glide trajectory, and the written summary](screenshots/visualizations-fixture.png)
+
+Motion — the pad trace filling as the glide plays:
+
+![The pitch/resonance pad trace growing frame by frame](screenshots/visualizations-playback.gif)
+
+The live-microphone path (frames arriving from the WASM core), and the light theme:
+
+![The live microphone mode with frames analysed in the browser](screenshots/visualizations-live.png)
+
+![The visualizations page in the light theme](screenshots/visualizations-light.png)
+
+Regenerate them with the site served locally:
+
+```sh
+npm run preview -w @sonorant/docs        # serving apps/docs/dist
+node scripts/capture-docs.mjs            # -> apps/docs/screenshots/*.png
+# motion (motion-capture skill), from the served page:
+#   motion capture --url http://localhost:4190/sonorant/#/visualizations \
+#     --action .motion/drive-playback.mjs --cursor --viewport 1200x820 \
+#     --seconds 7 --out .motion/playback.webm
+#   motion convert .motion/playback.webm \
+#     --out apps/docs/screenshots/visualizations-playback.gif --max-bytes 1500000
+```
+
 ## Security
 
 The docs site is not the app. It sets a Content-Security-Policy at build time

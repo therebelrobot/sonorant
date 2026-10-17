@@ -174,7 +174,21 @@ for (let i = 0; i < STEPS; i++) {
 }
 const combined = join(tmp, "glide.wav");
 writeWavF32(combined, concat(samples));
-const glide = analyse(combined);
+const rawGlide = analyse(combined);
+
+// The glide is stitched from independently synthesised segments, so its joins
+// carry a transient the core correctly refuses to trust: unvoiced, subharmonic or
+// formant-unstable frames. Keep only the frames that pass the same gate the UI
+// uses, and trim the tail so the demo's "current frame" is trustworthy.
+const FORMANTS_UNTRUSTED_FLAGS = 8 /* SUBHARMONIC */ | 16 /* FORMANT_UNSTABLE */;
+const meanFormantConfidence = (f) => {
+  const present = f.formants.filter((x) => x.hz > 0).map((x) => x.confidence);
+  return present.length ? present.reduce((a, b) => a + b, 0) / present.length : 0;
+};
+const trustworthy = (f) => f.f0_hz > 0 && (f.flags & FORMANTS_UNTRUSTED_FLAGS) === 0 && f.f0_confidence >= 0.4 && meanFormantConfidence(f) >= 0.6;
+
+const glide = rawGlide.filter(trustworthy);
+while (glide.length > 0 && !trustworthy(glide[glide.length - 1])) glide.pop();
 
 function concat(parts) {
   const total = parts.reduce((sum, p) => sum + p.length, 0);
@@ -194,7 +208,9 @@ writeFixture("synthetic-glide.frames.json", {
   description:
     "A synthetic glide: pitch rises 110→260 Hz while the preset vowel's formants scale 1.18→0.94 " +
     `(a longer apparent tract) over ${(STEPS * STEP_SECONDS).toFixed(1)} s. Analysed as one signal, ` +
-    "so resonance moves relative to the session's own baseline.",
+    "so resonance moves relative to the session's own baseline. Frames the core flagged unvoiced, " +
+    "subharmonic or formant-unstable (the joins between synthesised segments) are omitted: the " +
+    "fixture shows the trustworthy trajectory only.",
   frame_len: 2048,
   hop: 512,
   frames: glide,
