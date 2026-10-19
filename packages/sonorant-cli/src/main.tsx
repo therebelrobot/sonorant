@@ -17,7 +17,7 @@ import { countFrames, runNativeFile } from "./native.ts";
 import { summarize } from "./summary.ts";
 import { parseWav } from "./wav.ts";
 
-export const VERSION = "0.6.4";
+export const VERSION = "0.6.5";
 
 const USAGE = `sonorant-cli — voice analysis
 
