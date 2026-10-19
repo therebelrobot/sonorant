@@ -1,0 +1,978 @@
+{
+  "fixture_format": 1,
+  "source": "fixtures/reference/vowel-150.wav",
+  "generator": "sonorant-cli 0.4.0 analyse",
+  "description": "Synthetic reference vowel, f0 ~150 Hz, formants 700/1220/2600 Hz, 0.3 s @ 44100 Hz. A real, sustained measurement: pitch and resonance are steady.",
+  "frame_len": 2048,
+  "hop": 512,
+  "frames": [
+    {
+      "t_ms": 0,
+      "f0_hz": 149.9063,
+      "voicing": 0.9945,
+      "f0_confidence": 0.9945,
+      "formants": [
+        {
+          "hz": 723.9538,
+          "bandwidth_hz": 100.0187,
+          "confidence": 0.75
+        },
+        {
+          "hz": 1206.0482,
+          "bandwidth_hz": 77.7718,
+          "confidence": 0.8056
+        },
+        {
+          "hz": 2575.7266,
+          "bandwidth_hz": 342.7277,
+          "confidence": 0.1432
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 24.6098,
+      "cpp_db": 0.6212,
+      "tilt_db_per_oct": -23.9411,
+      "h1_h2_db": -3.833,
+      "centroid_hz": 980.7802,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.3602,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.5449,
+      "flags": 32
+    },
+    {
+      "t_ms": 11,
+      "f0_hz": 150.0043,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.0865,
+          "bandwidth_hz": 100.4061,
+          "confidence": 0.7476
+        },
+        {
+          "hz": 1206.1041,
+          "bandwidth_hz": 78.2122,
+          "confidence": 0.8041
+        },
+        {
+          "hz": 2576.8215,
+          "bandwidth_hz": 342.791,
+          "confidence": 0.1424
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 25.7994,
+      "cpp_db": 0.5653,
+      "tilt_db_per_oct": -24.4464,
+      "h1_h2_db": -3.8307,
+      "centroid_hz": 981.1213,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4637,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.364,
+      "flags": 32
+    },
+    {
+      "t_ms": 23,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.2519,
+          "bandwidth_hz": 101.2785,
+          "confidence": 0.7451
+        },
+        {
+          "hz": 1206.209,
+          "bandwidth_hz": 78.9711,
+          "confidence": 0.8019
+        },
+        {
+          "hz": 2578.6404,
+          "bandwidth_hz": 347.2294,
+          "confidence": 0.131
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 26.7172,
+      "cpp_db": 0.5323,
+      "tilt_db_per_oct": -24.4367,
+      "h1_h2_db": -3.8356,
+      "centroid_hz": 981.2039,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4478,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.3121,
+      "flags": 32
+    },
+    {
+      "t_ms": 34,
+      "f0_hz": 150.0005,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.3889,
+          "bandwidth_hz": 102.21,
+          "confidence": 0.7431
+        },
+        {
+          "hz": 1206.252,
+          "bandwidth_hz": 79.7357,
+          "confidence": 0.8004
+        },
+        {
+          "hz": 2579.1501,
+          "bandwidth_hz": 351.199,
+          "confidence": 0.1218
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 27.3994,
+      "cpp_db": 0.5438,
+      "tilt_db_per_oct": -24.1725,
+      "h1_h2_db": -3.8345,
+      "centroid_hz": 980.5332,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.5018,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.2428,
+      "flags": 32
+    },
+    {
+      "t_ms": 46,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.48,
+          "bandwidth_hz": 102.7346,
+          "confidence": 0.7422
+        },
+        {
+          "hz": 1206.2944,
+          "bandwidth_hz": 80.2008,
+          "confidence": 0.7992
+        },
+        {
+          "hz": 2580.0332,
+          "bandwidth_hz": 354.7242,
+          "confidence": 0.1128
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 27.9114,
+      "cpp_db": 0.5752,
+      "tilt_db_per_oct": -24.0861,
+      "h1_h2_db": -3.8329,
+      "centroid_hz": 980.5383,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4476,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.1988,
+      "flags": 32
+    },
+    {
+      "t_ms": 58,
+      "f0_hz": 150.0008,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.1343,
+          "bandwidth_hz": 100.5592,
+          "confidence": 0.745
+        },
+        {
+          "hz": 1206.1545,
+          "bandwidth_hz": 78.3728,
+          "confidence": 0.8031
+        },
+        {
+          "hz": 2578.1121,
+          "bandwidth_hz": 344.569,
+          "confidence": 0.1375
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 53.0044,
+      "cpp_db": 0.5405,
+      "tilt_db_per_oct": -24.5587,
+      "h1_h2_db": -3.8296,
+      "centroid_hz": 981.2003,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4447,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0399,
+      "flags": 32
+    },
+    {
+      "t_ms": 69,
+      "f0_hz": 150.0011,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.2877,
+          "bandwidth_hz": 101.4884,
+          "confidence": 0.7447
+        },
+        {
+          "hz": 1206.2186,
+          "bandwidth_hz": 79.1206,
+          "confidence": 0.8018
+        },
+        {
+          "hz": 2578.7363,
+          "bandwidth_hz": 347.4758,
+          "confidence": 0.131
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5138,
+      "tilt_db_per_oct": -24.3364,
+      "h1_h2_db": -3.8331,
+      "centroid_hz": 981.15,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4879,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.002,
+      "flags": 32
+    },
+    {
+      "t_ms": 81,
+      "f0_hz": 150.0008,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.0726,
+          "bandwidth_hz": 100.4396,
+          "confidence": 0.7467
+        },
+        {
+          "hz": 1206.0933,
+          "bandwidth_hz": 78.2834,
+          "confidence": 0.8035
+        },
+        {
+          "hz": 2577.2327,
+          "bandwidth_hz": 344.3502,
+          "confidence": 0.1383
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5489,
+      "tilt_db_per_oct": -23.9944,
+      "h1_h2_db": -3.8371,
+      "centroid_hz": 980.4688,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.5262,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 92,
+      "f0_hz": 150.0008,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.0214,
+          "bandwidth_hz": 100.131,
+          "confidence": 0.7491
+        },
+        {
+          "hz": 1206.0605,
+          "bandwidth_hz": 78.0198,
+          "confidence": 0.8047
+        },
+        {
+          "hz": 2576.5967,
+          "bandwidth_hz": 342.7707,
+          "confidence": 0.1427
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5845,
+      "tilt_db_per_oct": -24.0312,
+      "h1_h2_db": -3.8328,
+      "centroid_hz": 980.6443,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4425,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 104,
+      "f0_hz": 150.0008,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.4502,
+          "bandwidth_hz": 102.5835,
+          "confidence": 0.7391
+        },
+        {
+          "hz": 1206.2903,
+          "bandwidth_hz": 80.0613,
+          "confidence": 0.7983
+        },
+        {
+          "hz": 2579.8499,
+          "bandwidth_hz": 353.1328,
+          "confidence": 0.1157
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5391,
+      "tilt_db_per_oct": -24.3746,
+      "h1_h2_db": -3.8294,
+      "centroid_hz": 981.2429,
+      "scale_semitones": 0,
+      "rms_dbfs": -9.4561,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 116,
+      "f0_hz": 150.001,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.5248,
+          "bandwidth_hz": 102.7823,
+          "confidence": 0.7423
+        },
+        {
+          "hz": 1206.3464,
+          "bandwidth_hz": 80.2073,
+          "confidence": 0.7991
+        },
+        {
+          "hz": 2580.5027,
+          "bandwidth_hz": 353.2921,
+          "confidence": 0.1165
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5501,
+      "tilt_db_per_oct": -24.4258,
+      "h1_h2_db": -3.8295,
+      "centroid_hz": 981.0735,
+      "scale_semitones": 0.007,
+      "rms_dbfs": -9.4752,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 127,
+      "f0_hz": 150,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 723.8555,
+          "bandwidth_hz": 99.0111,
+          "confidence": 0.7455
+        },
+        {
+          "hz": 1205.9984,
+          "bandwidth_hz": 77.082,
+          "confidence": 0.805
+        },
+        {
+          "hz": 2575.7451,
+          "bandwidth_hz": 337.9215,
+          "confidence": 0.1523
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.6001,
+      "tilt_db_per_oct": -24.3245,
+      "h1_h2_db": -3.8376,
+      "centroid_hz": 980.4123,
+      "scale_semitones": -0.0106,
+      "rms_dbfs": -9.4769,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 139,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.6305,
+          "bandwidth_hz": 103.5259,
+          "confidence": 0.7333
+        },
+        {
+          "hz": 1206.3882,
+          "bandwidth_hz": 80.844,
+          "confidence": 0.7953
+        },
+        {
+          "hz": 2581.1633,
+          "bandwidth_hz": 356.9852,
+          "confidence": 0.1053
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.581,
+      "tilt_db_per_oct": -24.1698,
+      "h1_h2_db": -3.8329,
+      "centroid_hz": 980.7457,
+      "scale_semitones": 0.0095,
+      "rms_dbfs": -9.4431,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 150,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.3784,
+          "bandwidth_hz": 101.7004,
+          "confidence": 0.7432
+        },
+        {
+          "hz": 1206.3069,
+          "bandwidth_hz": 79.323,
+          "confidence": 0.8012
+        },
+        {
+          "hz": 2579.8474,
+          "bandwidth_hz": 348.911,
+          "confidence": 0.1271
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.4997,
+      "tilt_db_per_oct": -24.2442,
+      "h1_h2_db": -3.8298,
+      "centroid_hz": 981.2741,
+      "scale_semitones": 0.0042,
+      "rms_dbfs": -9.4489,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 162,
+      "f0_hz": 150.0005,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.0419,
+          "bandwidth_hz": 100.4875,
+          "confidence": 0.7453
+        },
+        {
+          "hz": 1206.0802,
+          "bandwidth_hz": 78.3076,
+          "confidence": 0.8027
+        },
+        {
+          "hz": 2577.5947,
+          "bandwidth_hz": 344.5523,
+          "confidence": 0.1374
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5321,
+      "tilt_db_per_oct": -24.3519,
+      "h1_h2_db": -3.8283,
+      "centroid_hz": 980.989,
+      "scale_semitones": -0.0046,
+      "rms_dbfs": -9.4511,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 174,
+      "f0_hz": 150.0005,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.1683,
+          "bandwidth_hz": 100.9117,
+          "confidence": 0.7464
+        },
+        {
+          "hz": 1206.1558,
+          "bandwidth_hz": 78.6642,
+          "confidence": 0.8028
+        },
+        {
+          "hz": 2578.082,
+          "bandwidth_hz": 346.0839,
+          "confidence": 0.1345
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5976,
+      "tilt_db_per_oct": -24.2586,
+      "h1_h2_db": -3.8357,
+      "centroid_hz": 980.376,
+      "scale_semitones": -0.0022,
+      "rms_dbfs": -9.6062,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0001,
+      "flags": 32
+    },
+    {
+      "t_ms": 185,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.1761,
+          "bandwidth_hz": 100.8609,
+          "confidence": 0.7478
+        },
+        {
+          "hz": 1206.163,
+          "bandwidth_hz": 78.6133,
+          "confidence": 0.8034
+        },
+        {
+          "hz": 2578.1072,
+          "bandwidth_hz": 345.7128,
+          "confidence": 0.1357
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.6078,
+      "tilt_db_per_oct": -24.4308,
+      "h1_h2_db": -3.833,
+      "centroid_hz": 980.8449,
+      "scale_semitones": -0.002,
+      "rms_dbfs": -9.4446,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0001,
+      "flags": 32
+    },
+    {
+      "t_ms": 197,
+      "f0_hz": 150.001,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.2514,
+          "bandwidth_hz": 101.4033,
+          "confidence": 0.7457
+        },
+        {
+          "hz": 1206.1888,
+          "bandwidth_hz": 79.1169,
+          "confidence": 0.802
+        },
+        {
+          "hz": 2578.8372,
+          "bandwidth_hz": 349.8312,
+          "confidence": 0.1251
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.528,
+      "tilt_db_per_oct": -24.6045,
+      "h1_h2_db": -3.8307,
+      "centroid_hz": 981.2812,
+      "scale_semitones": 0.0003,
+      "rms_dbfs": -9.4424,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0001,
+      "flags": 32
+    },
+    {
+      "t_ms": 208,
+      "f0_hz": 150.0009,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.2747,
+          "bandwidth_hz": 101.5796,
+          "confidence": 0.7458
+        },
+        {
+          "hz": 1206.2036,
+          "bandwidth_hz": 79.228,
+          "confidence": 0.8018
+        },
+        {
+          "hz": 2578.7727,
+          "bandwidth_hz": 349.137,
+          "confidence": 0.1271
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5545,
+      "tilt_db_per_oct": -24.376,
+      "h1_h2_db": -3.8288,
+      "centroid_hz": 980.8843,
+      "scale_semitones": 0.0005,
+      "rms_dbfs": -9.4657,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0001,
+      "flags": 32
+    },
+    {
+      "t_ms": 220,
+      "f0_hz": 150.0006,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 723.937,
+          "bandwidth_hz": 99.7413,
+          "confidence": 0.7471
+        },
+        {
+          "hz": 1206.0128,
+          "bandwidth_hz": 77.7011,
+          "confidence": 0.8045
+        },
+        {
+          "hz": 2576.3093,
+          "bandwidth_hz": 341.6533,
+          "confidence": 0.1445
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5906,
+      "tilt_db_per_oct": -24.1469,
+      "h1_h2_db": -3.8339,
+      "centroid_hz": 980.352,
+      "scale_semitones": -0.0087,
+      "rms_dbfs": -9.4857,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 232,
+      "f0_hz": 150.0012,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.0496,
+          "bandwidth_hz": 100.3956,
+          "confidence": 0.7478
+        },
+        {
+          "hz": 1206.0776,
+          "bandwidth_hz": 78.2123,
+          "confidence": 0.804
+        },
+        {
+          "hz": 2576.8672,
+          "bandwidth_hz": 343.1485,
+          "confidence": 0.1418
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.5105,
+      "tilt_db_per_oct": -24.2456,
+      "h1_h2_db": -3.8331,
+      "centroid_hz": 980.9445,
+      "scale_semitones": -0.0062,
+      "rms_dbfs": -9.4468,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    },
+    {
+      "t_ms": 243,
+      "f0_hz": 150.0011,
+      "voicing": 1,
+      "f0_confidence": 1,
+      "formants": [
+        {
+          "hz": 724.5605,
+          "bandwidth_hz": 103.1139,
+          "confidence": 0.737
+        },
+        {
+          "hz": 1206.3629,
+          "bandwidth_hz": 80.4983,
+          "confidence": 0.7969
+        },
+        {
+          "hz": 2580.7532,
+          "bandwidth_hz": 354.979,
+          "confidence": 0.1109
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        },
+        {
+          "hz": 0,
+          "bandwidth_hz": 0,
+          "confidence": 0
+        }
+      ],
+      "hnr_db": 59.9427,
+      "cpp_db": 0.564,
+      "tilt_db_per_oct": -24.2716,
+      "h1_h2_db": -3.832,
+      "centroid_hz": 981.2839,
+      "scale_semitones": 0.0079,
+      "rms_dbfs": -9.4433,
+      "spl_db": null,
+      "jitter_local": 0,
+      "shimmer_local": 0.0002,
+      "flags": 32
+    }
+  ]
+}

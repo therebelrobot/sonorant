@@ -8,7 +8,7 @@ mod wav;
 use std::env;
 use std::process::ExitCode;
 
-use sonorant_analysis::{AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer};
+use sonorant_analysis::{AnalysisFrame, AnalysisParams, Analyzer, FrameAnalyzer, SessionAnalyzer};
 
 pub(crate) const EXIT_OK: u8 = 0;
 pub(crate) const EXIT_INPUT: u8 = 1;
@@ -30,6 +30,7 @@ ANALYSIS OPTIONS (analyse, fixture):
 
 analyse OPTIONS:
     --limit <N>         stop after N frames
+    --session           apply the session baseline (scale_semitones), as the app does
     --quiet             do not print the summary to stderr
 
 fixture OPTIONS:
@@ -40,6 +41,7 @@ synth OPTIONS:
     --f0 <HZ>           fundamental (default 150)
     --duration <S>      seconds (default 0.3)
     --sample-rate <HZ>  (default 44100)
+    --formant-scale <X> scale the preset vowel's formants (default 1.0)
     --out <FILE>        output path (default sonorant-reference.wav)
 
     -h, --help          print this help
@@ -126,6 +128,26 @@ pub(crate) fn params_for(
 pub(crate) fn analyze_pcm(params: AnalysisParams, mono: &[f32]) -> Vec<AnalysisFrame> {
     let mut analyzer = FrameAnalyzer::new(params.sample_rate);
     analyzer.configure(params);
+    analyzer.push(mono);
+    let mut frames = Vec::new();
+    let mut chunk = vec![AnalysisFrame::default(); 512];
+    loop {
+        let n = analyzer.drain(&mut chunk);
+        if n == 0 {
+            break;
+        }
+        frames.extend_from_slice(&chunk[..n]);
+    }
+    frames
+}
+
+/// Analyse mono PCM through the `SessionAnalyzer`, so the session baseline is
+/// applied and `scale_semitones` is a log-ratio against the session's first
+/// voiced frames (TDD §4.1). The plain `analyze_pcm` leaves it at 0.
+pub(crate) fn analyze_pcm_session(params: AnalysisParams, mono: &[f32]) -> Vec<AnalysisFrame> {
+    let mut analyzer = SessionAnalyzer::new(params.sample_rate);
+    analyzer.configure(params);
+    analyzer.start_session();
     analyzer.push(mono);
     let mut frames = Vec::new();
     let mut chunk = vec![AnalysisFrame::default(); 512];

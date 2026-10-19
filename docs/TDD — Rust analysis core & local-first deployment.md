@@ -117,13 +117,15 @@ sonorant/
   apps/
     web/                  # TS UI + AudioWorklet shim + Worker
     desktop/              # Tauri 2 shell reusing apps/web
+    docs/                 # GitHub Pages docs site + visualization showcase
   packages/
     sonorant/             # npm: WASM core wrapper
     sonorant-cli/         # npm: Ink CLI (TypeScript orchestration/UI only)
+    sonorant-react/       # npm: reusable React visualizations
   docs/
 ```
 
-**npm packages.** Two packages publish to npm:
+**npm packages.** Three packages publish to npm:
 
 - **`sonorant`** — the npm library that wraps the WASM core (the `sonorant-ffi` / `sonorant-core`
   wasm artifact). This is the package a web or TypeScript consumer imports; it ships the
@@ -134,6 +136,11 @@ sonorant/
   and shells out to the native `sonorant-cli` Rust binary for batch and conformance work where the
   native path is faster. Both routes go through the same `Analyzer` / `Engine` contract (§4), so no
   maths is duplicated in TypeScript.
+- **`sonorant-react`** — reusable React visualizations for the frame objects the core produces: a
+  pitch/resonance pad, a longitudinal trend chart that marks `core_version` boundaries, a
+  confidence-bearing summary, and voice-quality meters. It contains **no acoustic maths**; it maps
+  and draws what the core measured, and every component renders an accessible text alternative.
+  The documentation site (`apps/docs`) is its first consumer.
 
 **Deliberate name collision.** The Rust crate `sonorant-cli` (reserved on crates.io) and the npm
 package `sonorant-cli` share a name but live in different registries. This is intentional and is
@@ -566,6 +573,9 @@ Designed for a clinician who has to justify this to someone else's IT review.
 - A CLI binary — the native `sonorant-cli` (crates.io) and the npm `sonorant-cli` Ink front end
   (§3) — and, when it exists, the desktop shell. Multi-arch images for `linux/amd64` and
   `linux/arm64`.
+- A **documentation site** (`apps/docs`) — developer documentation and a visualization showcase using
+  `sonorant-react` (§3) — published to GitHub Pages. It is a static site like the app: no backend, no
+  network calls.
 - Nothing else. There is no service tier.
 
 **Operator requirements, documented prominently because they will be hit:**
@@ -731,7 +741,8 @@ left as an intention.
 
 Deliberately absent, because there is no backend and no organization: sync contracts and an OpenAPI
 document, RBAC, audit logging, rate limiting, and compliance/BAA analysis. Screen specs and the
-story breakdown are phase 6 and 7 deliverables. The npm package layout (`sonorant`, `sonorant-cli`)
-and the TypeScript/Ink CLI are now specified here (§3), where they were previously absent. This
+story breakdown are phase 6 and 7 deliverables. The npm package layout (`sonorant`, `sonorant-cli`,
+`sonorant-react`), the TypeScript/Ink CLI, and the GitHub Pages documentation site (`apps/docs`)
+are now specified here (§3), where they were previously absent. This
 document is sufficient for a solo builder to start on the Rust `sonorant-cli` crate, which is the
 correct first artifact.

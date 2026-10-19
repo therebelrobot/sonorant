@@ -87,9 +87,11 @@ sonorant/
   apps/
     web/                # TS UI + AudioWorklet shim + Worker
     desktop/            # Tauri 2 shell reusing apps/web
+    docs/               # GitHub Pages docs site + visualization showcase
   packages/
     sonorant/           # npm: WASM core wrapper (library)
     sonorant-cli/       # npm: user-facing CLI, TypeScript + Ink
+    sonorant-react/     # npm: reusable React visualizations
   fixtures/             # reference recordings + offline oracle output
   scripts/              # egress scan, web verification, release versioning
   docs/                 # brief, TDD, rules, verification, and this README's media

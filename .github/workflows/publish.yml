@@ -73,6 +73,7 @@ jobs:
           mkdir -p dist-pack
           npm pack -w sonorant --pack-destination dist-pack
           npm pack -w sonorant-cli --pack-destination dist-pack
+          npm pack -w sonorant-react --pack-destination dist-pack
           ls -l dist-pack
 
       - uses: actions/upload-artifact@v4
