@@ -116,7 +116,10 @@ jobs:
         run: |
           for tarball in dist-pack/*.tgz; do
             echo "publishing $(basename "$tarball")"
-            npm publish "$tarball" --ignore-scripts
+            # The leading `./` matters: a bare `dist-pack/foo.tgz` is read as the
+            # GitHub shorthand `owner/repo`, so npm tries to clone
+            # `git@github.com/dist-pack/foo.tgz.git` instead of opening the file.
+            npm publish "./$tarball" --ignore-scripts
           done
 
   crates:
