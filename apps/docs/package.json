@@ -1,6 +1,6 @@
 {
   "name": "@sonorant/docs",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "description": "Sonorant documentation site and visualization showcase (GitHub Pages).",
   "license": "Unlicense",
@@ -15,8 +15,8 @@
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sonorant": "^0.6.1",
-    "sonorant-react": "^0.6.1"
+    "sonorant": "^0.6.2",
+    "sonorant-react": "^0.6.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
