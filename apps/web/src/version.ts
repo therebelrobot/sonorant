@@ -1,3 +1,3 @@
 // The app's own version. Mirrors the @sonorant/web package version; the core and
 // ABI versions come from the wasm engine at runtime.
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "0.5.0";
