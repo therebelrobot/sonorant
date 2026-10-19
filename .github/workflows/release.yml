@@ -1,17 +1,25 @@
 # Cuts a release, with exactly one human decision in it.
 #
-# On every push to main:
-#   * if this push *is* the release PR being merged, tag it, build it, and create
-#     the GitHub Release, then hand off to publish.yml (npm + crates.io);
-#   * otherwise, if the commits since the last tag are worth a release, open or
-#     update a release PR containing the version bump.
+# A release starts with a human running the release script, which bumps every
+# copy of the version, commits `chore(release): vX.Y.Z`, and pushes the commit
+# and the tag to main:
 #
-# Merging that PR is the approval, and that is deliberate rather than timid. A
-# registry publish cannot be undone — crates.io cannot delete or reuse a version —
-# and `CORE_VERSION` is stamped on every user's stored measurements (TDD §9), so
-# the version is a *measurement* claim. A conventional-commit bot can tell that a
-# `feat` happened; it cannot tell whether a measure moved. The release PR is where
-# a human looks.
+#   npm run release:patch   # or release:minor / release:major
+#
+# On a push to main, this workflow does the rest: it recognises the release
+# commit, builds and gates the artifacts, creates the GitHub Release, and hands
+# off to publish.yml (npm + crates.io).
+#
+# It does NOT open release pull requests. It used to: on any push to main whose
+# commits looked releasable it drafted a `chore(release): vX.Y.Z` PR. That
+# looped — each merged release PR immediately produced another — because the
+# "is this push the release PR?" test looked for the branch name in the merge
+# commit *body*, where GitHub does not put it (the branch name is in the
+# subject, the body is the PR title). With no tag ever created, `plan` saw
+# unreleased commits every time and proposed a new bump forever. Deciding the
+# bump by running the release script is where that judgement belonged anyway:
+# `CORE_VERSION` is a *measurement* claim (TDD §9), and a conventional-commit
+# bot can see that a `feat` happened but not whether a measure moved.
 #
 # Why release.yml does not just push a tag and let a second workflow notice:
 # events raised by GITHUB_TOKEN do not trigger workflow runs. Pushing `v0.5.0`
@@ -59,92 +67,21 @@ jobs:
           node scripts/version.mjs check
 
           subject="$(git log -1 --format=%s)"
-          body="$(git log -1 --format=%b)"
           is_release_push=false
+          # `npm run release:*` commits exactly `chore(release): vX.Y.Z`, so the
+          # subject is the whole test. (A merge-commit branch-name check used to
+          # live here; it never matched, and there is no release PR to merge now.)
           if printf '%s' "$subject" | grep -qE "^chore\(release\): v${version}\b"; then
-            is_release_push=true                                    # squash or rebase merge
-          elif printf '%s' "$subject" | grep -qE "^Merge pull request" \
-            && printf '%s' "$body" | grep -qE "release/v${version}\b"; then
-            is_release_push=true                                    # merge commit
+            is_release_push=true
           fi
 
-          if [ "$is_release_push" = true ] && ! git rev-parse "v${version}" >/dev/null 2>&1; then
+          if [ "$is_release_push" = true ]; then
             echo "mode=release" >> "$GITHUB_OUTPUT"
             echo "version=${version}" >> "$GITHUB_OUTPUT"
             echo "This push released ${version}."
-            exit 0
-          fi
-
-          next="$(node scripts/version.mjs plan)"
-          if [ -n "$next" ]; then
-            echo "mode=pr" >> "$GITHUB_OUTPUT"
-            echo "version=${next}" >> "$GITHUB_OUTPUT"
-            echo "Proposing ${next} in a release PR."
           else
             echo "mode=none" >> "$GITHUB_OUTPUT"
-            echo "Nothing to release."
-          fi
-
-  release-pr:
-    name: Open the release PR
-    needs: plan
-    if: needs.plan.outputs.mode == 'pr'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Prepare the bump
-        env:
-          NEXT: ${{ needs.plan.outputs.version }}
-        run: |
-          set -euo pipefail
-          node scripts/version.mjs set "$NEXT"
-          node scripts/version.mjs check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "release/v${NEXT}"
-          git commit -am "chore(release): v${NEXT}"
-          git push -fu origin "release/v${NEXT}"
-
-          since="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
-          {
-            echo "Merging this tags \`v${NEXT}\`, creates the GitHub Release, and publishes to npm and crates.io."
-            echo
-            echo "**Check the bump before you merge it.** \`CORE_VERSION\` is stamped on every stored"
-            echo "measurement, so the number is a claim about what the tool measures (TDD §9), not"
-            echo "about an API. This was drafted from the commit subjects below — a changed measure"
-            echo "is not automatically a \`minor\`. Edit the version in this PR if it should differ."
-            echo
-            echo "### Commits since ${since:-the first commit}"
-            # shellcheck disable=SC2086
-            git log --format='- %s' ${since:+"${since}..HEAD"}
-          } > /tmp/release-pr.md
-          cat /tmp/release-pr.md
-
-      - name: Open or update the pull request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEXT: ${{ needs.plan.outputs.version }}
-        run: |
-          set -euo pipefail
-          if gh pr view "release/v${NEXT}" --json number >/dev/null 2>&1; then
-            gh pr edit "release/v${NEXT}" --title "chore(release): v${NEXT}" --body-file /tmp/release-pr.md
-          else
-            gh pr create --base main --head "release/v${NEXT}" \
-              --title "chore(release): v${NEXT}" --body-file /tmp/release-pr.md
+            echo "Not a release commit; nothing to release."
           fi
 
   build:
@@ -237,8 +174,14 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          # `npm run release:*` already pushed the tag with the release commit, so
+          # only create it when it is missing (a hand-made bump commit, say).
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists; leaving it as pushed."
+          else
+            git tag "v${VERSION}"
+            git push origin "v${VERSION}"
+          fi
 
       - uses: softprops/action-gh-release@v2
         with:

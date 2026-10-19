@@ -218,7 +218,8 @@ export const RELEASE_SUBJECT = /^chore\(release\):/;
  *
  * A breaking change is `major`, a `feat` is `minor`, anything else that is work is
  * `patch`. Because `CORE_VERSION` is a *measurement* claim (TDD §9), this is a
- * first draft for the release PR, not a decision — the reviewer can change it.
+ * first draft for the release, not a decision — the person running `release`
+ * can change it.
  */
 export function planBump(subjects) {
   const work = subjects.filter((s) => s.trim() && !RELEASE_SUBJECT.test(s));

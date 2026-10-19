@@ -122,7 +122,7 @@ The project follows the **Risk Reduction Delivery Framework (RRF)** at the **lig
 - [Measure tolerances](docs/measure-tolerances.md) — what a version bump is allowed to move, and by how much.
 - [Conformance fixtures](docs/conformance.md) — Praat as an offline validation oracle that ships nothing.
 - [Deployment](docs/deployment.md) — publishing the static bundle, and the rollback rule.
-- [Releasing](docs/releasing.md) — the release PR, version alignment, and the publishing gates.
+- [Releasing](docs/releasing.md) — the release script, version alignment, and the publishing gates.
 
 ---
 
