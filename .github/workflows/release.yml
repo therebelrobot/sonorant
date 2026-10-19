@@ -211,5 +211,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.plan.outputs.version }}
         run: |
-          gh workflow run publish.yml --ref main -f "tag=v${VERSION}"
+          # This job has no checkout, so `gh` has no local git repository to read the
+          # owner/repo from and fails with "not a git repository". `--repo` supplies
+          # it directly, which is why this job needs no checkout and only
+          # `actions: write`.
+          gh workflow run publish.yml --ref main --repo "${{ github.repository }}" \
+            -f "tag=v${VERSION}"
           echo "publish.yml dispatched for v${VERSION}"
