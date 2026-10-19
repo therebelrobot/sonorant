@@ -12,6 +12,13 @@ jobs:
   rust:
     name: Rust
     runs-on: ubuntu-latest
+    # `rustsec/audit-check` publishes its result as a check run, which needs
+    # `checks: write` — the workflow-level `contents: read` is not enough, and the
+    # step fails with "Resource not accessible by integration" on push events.
+    # Scope it to this job rather than widening every job in the workflow.
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.88.0
