@@ -1,6 +1,6 @@
 {
   "name": "sonorant",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "scripts": {
     "test": "node --test",
     "build": "esbuild src/index.ts --bundle --format=esm --external:../pkg/* --outfile=dist/index.js",
