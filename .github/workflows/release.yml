@@ -111,6 +111,13 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # The native CLI binary is a release artifact. `npm run build` builds the web
+      # bundle and the wasm wrapper but not the Rust binary, so build it here.
+      # `docs/deployment.md` lists it as a build step for exactly this reason; the
+      # "Package artifacts" step below tars `target/release/sonorant-cli`.
+      - name: Build the native CLI (release)
+        run: cargo build --release --locked -p sonorant-cli
+
       - name: Licence and advisory gate
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
