@@ -1,15 +1,17 @@
 // Tests for the release-version tool. The last one is the CI gate: it reads the
-// actual repository, so a hand-edited version in any of the nine places fails
-// here rather than at publish time.
+// actual repository, so a hand-edited version in any place fails here rather than
+// at publish time.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  CARGO_LOCK_CRATES,
   COPIES,
   NPM_RANGES,
   NPM_WORKSPACES,
   bump,
+  lockVersions,
   planBump,
   readAll,
   sectionVersion,
@@ -62,13 +64,38 @@ test("sectionVersion rewrites the version key and nothing that merely ends in on
   assert.match(deps, /^version = "0\.1\.0"$/m, "the other section must be untouched");
 });
 
+test("lockVersions reads every package's own version, member or not", () => {
+  const lock = [
+    'version = 4',
+    '',
+    '[[package]]',
+    'name = "sonorant-core"',
+    'version = "0.6.0"',
+    'dependencies = [',
+    ' "realfft",',
+    ']',
+    '',
+    '[[package]]',
+    'name = "realfft"',
+    'version = "3.4.0"',
+    'source = "registry+https://github.com/rust-lang/crates.io-index"',
+    '',
+  ].join("\n");
+
+  const versions = lockVersions(lock);
+  assert.equal(versions.get("sonorant-core"), "0.6.0");
+  assert.equal(versions.get("realfft"), "3.4.0");
+  assert.equal(versions.get("nope"), undefined);
+});
+
 test("the repository carries one version in every place", () => {
   const { version, rows, drift } = readAll();
 
   assert.match(version, /^\d+\.\d+\.\d+$/, "the Cargo workspace version must be readable");
   assert.equal(
     rows.length,
-    COPIES.length + NPM_WORKSPACES.length + NPM_RANGES.length,
+    COPIES.length + NPM_WORKSPACES.length + NPM_RANGES.length +
+      CARGO_LOCK_CRATES.length + 2, // the reference fixture's two version fields
     "every copy is read, so none can hide from the check",
   );
   assert.deepEqual(
