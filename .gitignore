@@ -21,3 +21,6 @@ dist/
 
 # macOS
 .DS_Store
+
+# Rendered README media (regenerate from docs/media/blueprint)
+docs/media/blueprint/out/
