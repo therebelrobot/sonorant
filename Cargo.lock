@@ -464,14 +464,14 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "sonorant-analysis"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "sonorant-core",
 ]
 
 [[package]]
 name = "sonorant-archive"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "argon2",
  "chacha20poly1305",
@@ -484,15 +484,15 @@ dependencies = [
 
 [[package]]
 name = "sonorant-calibrate"
-version = "0.6.2"
+version = "0.6.3"
 
 [[package]]
 name = "sonorant-capture"
-version = "0.6.2"
+version = "0.6.3"
 
 [[package]]
 name = "sonorant-cli"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "hound",
  "serde_json",
@@ -502,14 +502,14 @@ dependencies = [
 
 [[package]]
 name = "sonorant-core"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "realfft",
 ]
 
 [[package]]
 name = "sonorant-ffi"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "serde_json",
  "sonorant-analysis",
