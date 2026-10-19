@@ -10,21 +10,20 @@ thing that writes it, and `npm run check:release` fails if any copy disagrees.
 ## The flow
 
 ```
-push to main
+npm run release:patch        # or release:minor / release:major — a human decides
    │
-   ├─ this push is the release PR being merged?
-   │     → tag vX.Y.Z → build + gate + attest → GitHub Release → publish to npm + crates.io
-   │
-   └─ otherwise, are the commits since the last tag worth a release?
-         → open (or update) a release PR that contains the version bump
+   └─ bumps every copy, commits "chore(release): vX.Y.Z",
+      pushes the commit and the tag to main
+        │
+        └─ release.yml sees the release commit on main
+             → build + gate + attest → GitHub Release → publish to npm + crates.io
 ```
 
 1. **Merge work into main as usual.** Nothing is released.
-2. **A release PR appears** (`chore(release): vX.Y.Z`) with the computed bump and the
-   commits behind it. If one is already open, it is updated rather than duplicated.
-3. **Review the number, then merge.** Merging is the approval. Edit the version in
-   the PR first if the bump is wrong.
-4. Everything after that is automatic: tag → build → gates → artifacts →
+2. **Decide the bump and run the release script.** `npm run release:patch` (or
+   `release:minor` / `release:major`) bumps every copy of the version, commits
+   `chore(release): vX.Y.Z`, and pushes the commit and the tag.
+3. Everything after that is automatic: build → gates → artifacts →
    GitHub Release → npm and crates.io.
 
 ### Why the human step is there
@@ -33,15 +32,29 @@ A registry publish is irreversible — crates.io cannot delete or reuse a versio
 and `CORE_VERSION` is stamped on every user's stored measurements, so the version
 is a claim about what the tool *measures* (TDD §9), not about an API. A
 conventional-commit bot can see that a `feat` happened; it cannot see whether a
-measure moved. The release PR is where a human looks, and `AGENTS.md` says the
-same thing in one line: *never automate launch actions; a human approves.*
+measure moved. Choosing the bump when you run the release script is where a human
+looks, and `AGENTS.md` says the same thing in one line: *never automate launch
+actions; a human approves.*
 
-The drafted bump is a first draft, not a judgement: `feat` → minor, `fix`/anything
-else → patch, `!` → major. Editing it in the PR is expected, not exceptional.
+The conventional-commit rule is a first draft, not a judgement: `feat` → minor,
+`fix`/anything else → patch, `!` → major. `node scripts/version.mjs plan` prints
+what the commits imply without changing anything; override it deliberately.
+
+### Why there is no release PR
+
+`release.yml` used to open a `chore(release): vX.Y.Z` pull request on any push to
+main whose commits looked releasable, and treat the merge as the approval. That
+loop was unbounded. The "is this push the release PR?" test looked for the branch
+name in the merge commit *body*, where GitHub does not put it — the branch name is
+in the subject, the body is the PR title — so a merged release PR looked like
+ordinary work, no tag was ever created, and the next push proposed another bump.
+Every merge produced a fresh release PR, and no release was ever cut. The PR is
+gone; running the release script is the approval, and the human judgement it stood
+for now lives in the bump choice.
 
 ## Doing a release by hand
 
-If CI is unavailable, the same steps run locally:
+The release script *is* the manual path; it is now the only path:
 
 ```bash
 npm run release:patch     # or release:minor / release:major
@@ -51,8 +64,8 @@ npm run check:release     # confirm every copy agrees
 ```
 
 The push hands over to `release.yml`, which sees a release commit and takes it
-from there. `node scripts/version.mjs plan` prints what the commits imply without
-changing anything.
+from there. If CI is unavailable, the bump is the whole local release; dispatch
+`publish.yml` from the Actions tab (or re-run it) once the artifacts are built.
 
 ## One-time setup (maintainer, needs 2FA)
 
