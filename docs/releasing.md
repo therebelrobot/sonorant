@@ -2,10 +2,14 @@
 
 **Status:** active (phase 10, [deployment](deployment.md) is the deploy half)
 
-A release is one number that travels to five places: the Rust workspace (which
-`CORE_VERSION` reads), three `package.json` files, the version `sonorant-cli
---version` prints, and the app's own version. `scripts/version.mjs` is the only
-thing that writes it, and `npm run check:release` fails if any copy disagrees.
+A release is one number that travels to many places: the Rust workspace version
+(which `CORE_VERSION` reads) and the lockfile that copies it into every crate
+(`Cargo.lock`, which `cargo build --locked` compares against `Cargo.toml`), five
+`package.json` files and the inter-package ranges that name each other, the version
+`sonorant-cli --version` prints, the app's own version, and the two version fields
+the published reference fixture stamps (`generator` and `core_version` — never its
+measured values). `scripts/version.mjs` is the only thing that writes it, and
+`npm run check:release` fails if any copy disagrees.
 
 ## The flow
 
@@ -152,6 +156,10 @@ verify` checks a downloaded artifact against it.
 - **"tag does not match the release version".** A copy of the version drifted.
   `npm run check:release` names every file that disagrees; fix with
   `node scripts/version.mjs set <version>`.
+- **The Rust job fails at `cargo build --locked`: "the lock file needs to be
+  updated".** `Cargo.lock` was not moved with the workspace version. `check:release`
+  now names it; fix with `node scripts/version.mjs set <version>`, which runs
+  `cargo update --workspace`.
 - **"no matching version found for sonorant@^x"** while bumping: a dependent's
   range did not move with the version. `scripts/version.mjs` keeps
   `NPM_RANGES` in sync; run `check:release` to confirm.
