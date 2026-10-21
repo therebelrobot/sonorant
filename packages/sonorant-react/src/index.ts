@@ -9,6 +9,7 @@
 // own — every component renders plain markup with stable class names.
 
 export * from "./model";
+export * from "./smoothing";
 
 export { VoicePad } from "./components/VoicePad";
 export type { VoicePadProps } from "./components/VoicePad";

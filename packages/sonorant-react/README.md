@@ -6,12 +6,16 @@ confidence-bearing frame summary, and voice-quality meters.
 
 These components contain **no acoustic maths**. They render the frame objects the
 Rust core produces — via the [`sonorant`](https://www.npmjs.com/package/sonorant)
-npm package — and they follow the project's two display rules:
+npm package — and they follow the project's three display rules:
 
 - **Every estimate carries a confidence indication.** Nothing is shown as a value
   without one.
 - **Nothing is conveyed by colour alone.** Each chart is paired with a written
   alternative, and every badge spells its band out in text.
+- **A live value is smoothed for the display, never for the measurement.** A
+  smoothed value is never stored, exported, used in a calculation, or shown as a
+  number; only where a dot is drawn. See the
+  [visualization-smoothing rule](https://github.com/therebelrobot/sonorant/blob/main/docs/rules/visualization-smoothing.md).
 
 ## Install
 
@@ -61,6 +65,26 @@ const frames = decodeFrames(framesView(engine));
 The pure mapping functions (`mapPitch`, `padPoint`, `summarize`, `buildTrendSeries`,
 `trendTextAlternative`, …) are exported too, so a consumer can render a text-only
 view or build a different chart on the same model.
+
+## Display smoothing
+
+`VoicePad` — the live renderer — smooths by default, so a value arriving at ~86 fps does not thrash
+and a drop-out does not snap the trace to the axis. Pass `smoothing` to tune it or turn it off:
+
+```tsx
+<VoicePad frames={frames} smoothing={{ emaTimeConstantMs: 200 }} />
+<VoicePad frames={frames} smoothing={{ mode: "none" }} /> {/* raw frames */}
+```
+
+A frame that is unvoiced, low-confidence, or outside the channel's display range is a **gap**: the
+last value is held and then faded — drawn dashed, with hollow dots and a "Held" label, never by
+colour alone — rather than snapping to the axis or being interpolated across. `TrendChart` is a
+*history* view, so it does not smooth; it aggregates.
+
+The pure pipeline is exported too (`smoothSeries`, `isDisplayable`, `withDefaults`,
+`SMOOTHING_DEFAULTS`, and the option types), so you can drive your own canvas with the same
+behaviour. Full default and the reasoning:
+[the visualization-smoothing rule](https://github.com/therebelrobot/sonorant/blob/main/docs/rules/visualization-smoothing.md).
 
 ## Styling
 

@@ -48,6 +48,30 @@
   fill: #3a6ea5;
 }
 
+/* A held stretch across a gap: dashed and hollow, never by colour alone — the
+ * caption and the "Held" label say it in words too. */
+.sonorant-pad__trace--stale {
+  stroke: #8a97a5;
+  stroke-dasharray: 4 3;
+}
+
+.sonorant-pad__dot--stale {
+  fill: none;
+  stroke: #8a97a5;
+  stroke-width: 1.5;
+}
+
+.sonorant-pad__held {
+  fill: #7a4d00;
+  font-size: 11px;
+}
+
+.sonorant-pad__current--stale rect,
+.sonorant-pad__current--stale circle {
+  stroke: #8a97a5;
+  stroke-dasharray: 3 2;
+}
+
 .sonorant-pad__current rect {
   fill: none;
   stroke: #1b1b1b;
