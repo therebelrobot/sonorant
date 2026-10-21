@@ -13,7 +13,7 @@ members = [
 
 # Shared across every crate so CORE_VERSION stays aligned (TDD §9, §15).
 [workspace.package]
-version = "0.6.5"
+version = "0.6.6"
 edition = "2021"
 license = "Unlicense"
 repository = "https://github.com/therebelrobot/sonorant"
@@ -23,6 +23,6 @@ repository = "https://github.com/therebelrobot/sonorant"
 # requires a path dependency to carry a version as well as a path, so these keep
 # both; a crate references one with `{ workspace = true }`.
 [workspace.dependencies]
-sonorant-core = { path = "crates/sonorant-core", version = "0.6.5" }
-sonorant-analysis = { path = "crates/sonorant-analysis", version = "0.6.5" }
-sonorant-archive = { path = "crates/sonorant-archive", version = "0.6.5" }
+sonorant-core = { path = "crates/sonorant-core", version = "0.6.6" }
+sonorant-analysis = { path = "crates/sonorant-analysis", version = "0.6.6" }
+sonorant-archive = { path = "crates/sonorant-archive", version = "0.6.6" }

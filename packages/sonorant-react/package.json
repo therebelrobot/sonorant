@@ -1,6 +1,6 @@
 {
   "name": "sonorant-react",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "Reusable React visualizations for Sonorant voice-analysis frames: a pitch/resonance pad, longitudinal trend chart, confidence-bearing summary and voice-quality meters. No acoustic maths — it draws what the Rust core measured.",
   "keywords": [
     "sonorant",
