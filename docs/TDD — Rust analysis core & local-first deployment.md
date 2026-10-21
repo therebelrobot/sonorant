@@ -153,6 +153,41 @@ and return structs. This is what makes four targets possible, and it means the a
 network client anywhere in its dependency graph — which is what makes §12's claim about egress
 verifiable rather than aspirational.
 
+### Display smoothing (presentation contract)
+
+Sonorant is used to *change* a voice while watching a value. The core emits a frame roughly every
+12 ms, and at that rate a raw value thrashes — the eye reads frame-to-frame jitter as instability in
+the voice, and a person training is taught to chase noise. The fix is a display fix, and it is
+standardised so every surface behaves the same and downstream consumers (a realtime monitor, a
+practice overlay) inherit the behaviour rather than inventing their own.
+
+- **Smoothing is a display concern, never a measurement one.** A smoothed value is never stored,
+  never exported, never used in a calculation, and never shown as a number. Text alternatives, stored
+  series, and summary statistics use raw measurements; a smoothed trace's caption states its mode.
+- **It is not acoustic maths, and it does not live in the core.** It estimates nothing about the
+  voice — it decides where a dot is drawn. It is implemented **once**, in TypeScript, and shared, for
+  the same reason `scale_semitones` is computed in the core: so two surfaces cannot drift. The cost is
+  **measured**, not asserted: ~0.22 µs per frame for all six channels, ~0.002 % of the 11.6 ms frame
+  period, with the pipeline O(1) per frame. Moving it across the WASM boundary would buy nothing and
+  cost a boundary call of the same order as the whole computation.
+- **Two registers, never mixed.** *Live* views smooth (time-based); *history* views aggregate
+  (median, percentiles). A history series is summarised, never filtered into a line; a live monitor is
+  never aggregated.
+- **The pipeline is fixed and named:** `displayable → rolling median → slew limit → EMA →
+  hold-and-fade`, each stage optional via `SmoothingOptions`, with `mode: "none"` for raw inspection.
+- **A gap is not a value.** Unvoiced, low-confidence, missing, or out-of-range frames are gaps: never
+  zero, never clamped to the axis, never interpolated across. The last displayable value is **held**
+  and then **faded**, marked stale in a non-colour way, so the drop-and-return that makes a live
+  monitor jarring is removed. Out-of-range harmonics — pitch beyond 60–1200 Hz, the shape an octave
+  error takes — are gaps plus their flag as text, never a clamped point pinned to the ceiling.
+- **Frame-rate independent.** Every time constant is in milliseconds, applied against the frame's own
+  `t_ms`, so a dropout lengthens the gap instead of over-smoothing its neighbours.
+- **No auto-scaling value axis.** One octave error would flatten every real change around it. Display
+  ranges are fixed and declared per channel.
+
+The full standard, its options, defaults, and the interface consumers code against are in
+[`docs/rules/visualization-smoothing.md`](rules/visualization-smoothing.md).
+
 ---
 
 ## 4. The analysis core contract
@@ -272,6 +307,8 @@ pub trait Analyzer {
   and stated here rather than discovered later.
 - **No perceptual scales in the core.** Bark mapping, semitone conversion, and reference
   comparison live in the UI. Exception: `scale_semitones`, which is unit-bearing by definition.
+  Display smoothing lives in the UI for the same reason and is standardised there (§3, Display
+  smoothing) — it is presentation, not measurement, so it never touches a stored value.
 
 ### 4.3 FFI surface (thin, no logic)
 

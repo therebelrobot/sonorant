@@ -173,12 +173,18 @@ Non-negotiable, and they are the reason the tool is worth building at all.
 ## 7. The full visualisation inventory
 
 The ~90-item inventory lives in its own document (`voice-viz-inventory`), tagged by domain and
-phased. Two rules when trimming it:
+phased. Three rules when trimming it:
 
 - **Phase 1 is fixed.** Input integrity, confidence overlays, F0 contour and distribution, the
   two-axis pad, sustained/glide exercises, recording + A/B, MPT, practice calendar. Below this the
   tool has no value.
 - **Nothing ships without a text summary, and nothing ships without a confidence indication.**
+- **Nothing live ships without the standard smoothing options.** This tool is used to *change* a
+  voice while watching a value, and at ~86 fps a raw value thrashes — the eye reads the jitter as
+  instability in the voice. Every live visualisation offers value smoothing, holds-and-fades across
+  gaps, and normalises transients, out-of-range harmonics, and rapid gaps the same standard way.
+  Smoothing is display only: it never touches a stored value or a reported number.
+  ([`rules/visualization-smoothing.md`](rules/visualization-smoothing.md).)
 
 ---
 
